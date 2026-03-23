@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#993556">
+  <meta name="theme-color" content="#C4537E">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Finança Rosa</title>
@@ -374,22 +374,33 @@
 <div class="modal" id="modal-add-prestacao">
   <div class="modal-drag-bar"></div>
   <div class="modal-header">
-    <h3 class="modal-title">Nova prestação</h3>
+    <h3 class="modal-title">Nova prestação 💳</h3>
     <button class="btn-modal-close" onclick="closeModal()">✕</button>
   </div>
-  <div class="modal-body">
+  <div class="modal-body" id="modal-prest-body">
+
     <div class="form-group">
       <label class="form-label">Nome / Descrição</label>
-      <input type="text" class="form-input" id="prest-name" placeholder="Ex: Carro, Telemóvel, Sofá…" oninput="updatePrestacaoPreview()">
+      <input type="text" class="form-input" id="prest-name"
+        placeholder="Ex: Carro, Telemóvel, Sofá…"
+        oninput="updatePrestacaoPreview()">
     </div>
-    <div class="form-group">
-      <label class="form-label">Valor mensal (€)</label>
-      <input type="number" class="form-input" id="prest-amount" placeholder="0,00" step="0.01" min="0" inputmode="decimal" oninput="updatePrestacaoPreview()">
+
+    <div class="prest-start-row">
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Valor mensal (€)</label>
+        <input type="number" class="form-input" id="prest-amount"
+          placeholder="0,00" step="0.01" min="0.01" inputmode="decimal"
+          oninput="updatePrestacaoPreview()">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Nº de meses</label>
+        <input type="number" class="form-input" id="prest-months"
+          placeholder="Ex: 12" min="1" max="360" inputmode="numeric"
+          oninput="updatePrestacaoPreview()">
+      </div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Número de meses</label>
-      <input type="number" class="form-input" id="prest-months" placeholder="Ex: 12, 24, 36…" min="1" max="360" inputmode="numeric" oninput="updatePrestacaoPreview()">
-    </div>
+
     <div class="prest-start-row">
       <div class="form-group" style="flex:1">
         <label class="form-label">Mês de início</label>
@@ -403,10 +414,13 @@
         </select>
       </div>
       <div class="form-group" style="flex:1">
-        <label class="form-label">Ano</label>
-        <input type="number" class="form-input" id="prest-start-year" placeholder="2026" min="2020" max="2050" inputmode="numeric" oninput="updatePrestacaoPreview()">
+        <label class="form-label">Ano de início</label>
+        <select class="form-input" id="prest-start-year" onchange="updatePrestacaoPreview()">
+          <!-- preenchido por JS em openAddPrestacao() -->
+        </select>
       </div>
     </div>
+
     <div class="form-group">
       <label class="form-label">Tipo de pagamento</label>
       <select class="form-input" id="prest-payment">
@@ -416,8 +430,10 @@
         <option value="MB Way">MB Way</option>
       </select>
     </div>
-    <!-- Preview em tempo real -->
+
+    <!-- Preview calculado em tempo real -->
     <div class="prest-preview" id="prest-preview" style="display:none;"></div>
+
   </div>
   <div class="modal-footer">
     <button class="btn-outline" onclick="closeModal()">Cancelar</button>

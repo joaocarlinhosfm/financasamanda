@@ -1068,18 +1068,30 @@ async function togglePrestacaoPaid(id, paid, checkEl) {
 
 // Abrir modal de nova prestação
 function openAddPrestacao() {
-  document.getElementById('prest-name').value        = '';
-  document.getElementById('prest-amount').value      = '';
-  document.getElementById('prest-months').value      = '';
-  document.getElementById('prest-payment').value     = 'Débito';
-  // Mês de início = mês atual por defeito
+  document.getElementById('prest-name').value    = '';
+  document.getElementById('prest-amount').value  = '';
+  document.getElementById('prest-months').value  = '';
+  document.getElementById('prest-payment').value = 'Débito';
+
+  // Preencher select de ano: ano atual -1 até +5
+  const yearSel = document.getElementById('prest-start-year');
+  yearSel.innerHTML = '';
+  const thisYear = new Date().getFullYear();
+  for (let y = thisYear - 1; y <= thisYear + 5; y++) {
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y;
+    if (y === APP.currentYear) opt.selected = true;
+    yearSel.appendChild(opt);
+  }
+
+  // Mês de início = mês atual
   document.getElementById('prest-start-month').value = APP.currentMonth;
-  document.getElementById('prest-start-year').value  = APP.currentYear;
+
   document.getElementById('prest-preview').style.display = 'none';
   openModal('modal-add-prestacao');
 }
 
-// Preview em tempo real ao preencher o formulário
+// Preview calculado em tempo real — dispara a cada keystroke
 function updatePrestacaoPreview() {
   const amount  = parseFloat(document.getElementById('prest-amount').value);
   const months  = parseInt(document.getElementById('prest-months').value);
@@ -1087,31 +1099,41 @@ function updatePrestacaoPreview() {
   const sYear   = parseInt(document.getElementById('prest-start-year').value);
   const preview = document.getElementById('prest-preview');
 
-  if (!amount || !months || months < 1 || !sMonth || !sYear) {
-    preview.style.display = 'none'; return;
-  }
+  // Esconder preview se campos incompletos ou inválidos
+  const valid = amount > 0 && months >= 1 && sMonth >= 1 && sMonth <= 12 && sYear >= 2020;
+  if (!valid) { preview.style.display = 'none'; return; }
 
   const { endMonth, endYear } = calcEndDate(sMonth, sYear, months);
-  const totalAmount = amount * months;
+  const totalAmount = parseFloat((amount * months).toFixed(2));
+  const startLabel  = `${MONTH_NAMES[sMonth-1]} ${sYear}`;
+  const endLabel    = `${MONTH_NAMES[endMonth-1]} ${endYear}`;
 
   preview.style.display = 'block';
   preview.innerHTML = `
     <div class="prest-preview-row">
-      <span class="prest-preview-label">Última prestação</span>
-      <span class="prest-preview-value">${MONTH_NAMES[endMonth-1]} ${endYear}</span>
-    </div>
-    <div class="prest-preview-row">
-      <span class="prest-preview-label">Total a pagar</span>
+      <span class="prest-preview-label">💳 Valor total</span>
       <span class="prest-preview-value accent">${fmt(totalAmount)}</span>
     </div>
+    <div class="prest-preview-divider"></div>
     <div class="prest-preview-row">
-      <span class="prest-preview-label">Duração</span>
-      <span class="prest-preview-value">${months} ${months===1?'mês':'meses'} · ${MONTH_NAMES[sMonth-1]} ${sYear} → ${MONTH_NAMES[endMonth-1]} ${endYear}</span>
+      <span class="prest-preview-label">📅 Início</span>
+      <span class="prest-preview-value">${startLabel}</span>
+    </div>
+    <div class="prest-preview-row">
+      <span class="prest-preview-label">🏁 Última prestação</span>
+      <span class="prest-preview-value">${endLabel}</span>
+    </div>
+    <div class="prest-preview-row">
+      <span class="prest-preview-label">📆 Duração</span>
+      <span class="prest-preview-value">${months} ${months===1?'mês':'meses'}</span>
     </div>`;
 }
 
 // Guardar nova prestação
 async function savePrestacao() {
+  const btn = document.getElementById('btn-save-prestacao');
+  if (btn.disabled) return; // guard duplo clique
+
   const name    = document.getElementById('prest-name').value.trim();
   const amount  = parseFloat(document.getElementById('prest-amount').value);
   const months  = parseInt(document.getElementById('prest-months').value);
@@ -1119,14 +1141,15 @@ async function savePrestacao() {
   const sYear   = parseInt(document.getElementById('prest-start-year').value);
   const payment = document.getElementById('prest-payment').value;
 
-  if (!name)              { showToast('Escreve um nome'); return; }
-  if (!amount||amount<=0) { showToast('Insere o valor mensal'); return; }
-  if (!months||months<1)  { showToast('Insere o número de meses'); return; }
+  // Validações com feedback claro
+  if (!name)                        { showToast('⚠️ Escreve o nome da prestação'); return; }
+  if (!amount || amount <= 0)       { showToast('⚠️ Insere o valor mensal'); return; }
+  if (!months || months < 1)        { showToast('⚠️ Insere o número de meses'); return; }
+  if (!sMonth || !sYear || sYear < 2020) { showToast('⚠️ Verifica a data de início'); return; }
 
   const { endMonth, endYear } = calcEndDate(sMonth, sYear, months);
-  const totalAmount = amount * months;
+  const totalAmount = parseFloat((amount * months).toFixed(2));
 
-  const btn = document.getElementById('btn-save-prestacao');
   btn.disabled = true; btn.textContent = 'A guardar…';
 
   try {
@@ -1141,10 +1164,10 @@ async function savePrestacao() {
     closeModal();
     await loadDashboard();
     if (document.getElementById('screen-gastos').classList.contains('active')) loadTransactions();
-    showToast(`Prestação criada · ${months} parcelas de ${fmt(amount)} ✓`);
+    showToast(`💳 Prestação criada · ${months}× de ${fmt(amount)} = ${fmt(totalAmount)} ✓`);
   } catch(e) {
     console.error('[savePrestacao]', e);
-    showToast('Erro ao guardar.');
+    showToast('Erro ao guardar. Verifica a ligação.');
   } finally {
     btn.disabled = false; btn.textContent = 'Criar prestação';
   }
