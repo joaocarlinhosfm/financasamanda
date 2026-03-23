@@ -1,5 +1,6 @@
 // =====================================================
 //  FINANÇA ROSA — Firebase Config & Helpers
+//  Base de dados: Firebase Realtime Database
 // =====================================================
 
 const FIREBASE_CONFIG = {
@@ -9,20 +10,18 @@ const FIREBASE_CONFIG = {
   storageBucket:     "financas-f4bfe.firebasestorage.app",
   messagingSenderId: "711422028123",
   appId:             "1:711422028123:web:90747c00bf525edf5d927e",
-  measurementId:     "G-70X7DHN855"
+  measurementId:     "G-70X7DHN855",
+  databaseURL:       "https://financas-f4bfe-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
-const db   = firebase.firestore();
+const db   = firebase.database();
 
-db.enablePersistence({ synchronizeTabs: true })
-  .catch(err => {
-    if (err.code === 'failed-precondition') console.warn('[Firebase] Persistência offline: múltiplas tabs.');
-    else if (err.code === 'unimplemented')  console.warn('[Firebase] Persistência offline não suportada.');
-  });
 
-// ─── AUTH ────────────────────────────────────────────
+// ─────────────────────────────────────────────────────
+//  AUTH
+// ─────────────────────────────────────────────────────
 
 async function ensureAuth() {
   return new Promise(resolve => {
@@ -36,8 +35,7 @@ async function signInWithGoogle() {
   const current = auth.currentUser;
   if (current && current.isAnonymous) {
     try {
-      const cred = await current.linkWithPopup(provider);
-      return cred.user;
+      return (await current.linkWithPopup(provider)).user;
     } catch (e) {
       if (e.code === 'auth/credential-already-in-use' || e.code === 'auth/email-already-in-use') {
         return (await auth.signInWithPopup(provider)).user;
@@ -56,54 +54,94 @@ async function signOut() {
   await auth.signOut();
 }
 
-// ─── PATH HELPERS ────────────────────────────────────
-const _userRef = uid => db.collection('users').doc(uid);
-const _colRef  = (uid, col) => _userRef(uid).collection(col);
-const _docRef  = (uid, col, id) => _colRef(uid, col).doc(id);
-const _monthKey = (m, y) => `${y}-${String(m).padStart(2,'0')}`;
-const _monthQuery = (uid, col, m, y) =>
-  _colRef(uid, col).where('month','==',m).where('year','==',y);
 
-// ─── DB API ──────────────────────────────────────────
+// ─────────────────────────────────────────────────────
+//  PATH HELPERS
+//  Estrutura: users/{uid}/{collection}/{id}
+// ─────────────────────────────────────────────────────
+const _ref     = path => db.ref(path);
+const _userRef = uid  => `users/${uid}`;
+const _colRef  = (uid, col) => `users/${uid}/${col}`;
+const _docRef  = (uid, col, id) => `users/${uid}/${col}/${id}`;
+const _monthKey = (m, y) => `${y}-${String(m).padStart(2, '0')}`;
+
+
+// ─────────────────────────────────────────────────────
+//  DB API  (espelha a interface anterior do Firestore)
+// ─────────────────────────────────────────────────────
 const DB = {
+
+  // Criar registo com ID automático (push)
   async add(uid, col, data) {
-    const ref = await _colRef(uid, col).add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-    return ref.id;
+    const ref  = _ref(_colRef(uid, col)).push();
+    const payload = { ...data, createdAt: Date.now() };
+    await ref.set(payload);
+    return ref.key;
   },
-  async update(uid, col, id, data) { await _docRef(uid, col, id).update(data); },
-  async delete(uid, col, id)       { await _docRef(uid, col, id).delete(); },
-  async getByMonth(uid, col, m, y) {
-    try {
-      const snap = await _monthQuery(uid, col, m, y).orderBy('createdAt','desc').get();
-      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    } catch {
-      const snap = await _monthQuery(uid, col, m, y).get();
-      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    }
+
+  // Atualizar campos (merge parcial)
+  async update(uid, col, id, data) {
+    await _ref(_docRef(uid, col, id)).update(data);
   },
+
+  // Apagar registo
+  async delete(uid, col, id) {
+    await _ref(_docRef(uid, col, id)).remove();
+  },
+
+  // Buscar todos os registos de um mês/ano
+  async getByMonth(uid, col, month, year) {
+    const snap = await _ref(_colRef(uid, col))
+      .orderByChild('month')
+      .equalTo(month)
+      .once('value');
+    const raw = snap.val() || {};
+    // filtrar também por ano (RTDB só permite 1 orderByChild)
+    return Object.entries(raw)
+      .filter(([, v]) => v.year === year)
+      .map(([id, v]) => ({ id, ...v }))
+      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  },
+
+  // Buscar todos os registos de uma coleção
   async getAll(uid, col) {
-    const snap = await _colRef(uid, col).get();
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const snap = await _ref(_colRef(uid, col)).once('value');
+    const raw  = snap.val() || {};
+    return Object.entries(raw).map(([id, v]) => ({ id, ...v }));
   },
+
+  // Definições do utilizador
   async getSettings(uid) {
-    const doc = await _userRef(uid).get();
-    return doc.exists ? doc.data() : null;
+    const snap = await _ref(`${_userRef(uid)}/settings`).once('value');
+    return snap.val() || null;
   },
-  async saveSettings(uid, data) { await _userRef(uid).set(data, { merge: true }); },
-  async getInvestment(uid, m, y) {
-    const doc = await _colRef(uid, 'investments').doc(_monthKey(m, y)).get();
-    return doc.exists ? doc.data() : {};
+
+  async saveSettings(uid, data) {
+    await _ref(`${_userRef(uid)}/settings`).update(data);
   },
-  async saveInvestment(uid, m, y, data) {
-    await _colRef(uid, 'investments').doc(_monthKey(m, y)).set(
-      { ...data, month: m, year: y, updatedAt: firebase.firestore.FieldValue.serverTimestamp() },
-      { merge: true }
-    );
+
+  // Investimentos: 1 registo por mês-ano
+  async getInvestment(uid, month, year) {
+    const key  = _monthKey(month, year);
+    const snap = await _ref(`${_userRef(uid)}/investments/${key}`).once('value');
+    return snap.val() || {};
   },
+
+  async saveInvestment(uid, month, year, data) {
+    const key = _monthKey(month, year);
+    await _ref(`${_userRef(uid)}/investments/${key}`).update({
+      ...data, month, year, updatedAt: Date.now()
+    });
+  },
+
+  // Importar batch de documentos (Excel)
   async importBatch(uid, col, docs) {
-    const batch = db.batch();
-    const ts = firebase.firestore.FieldValue.serverTimestamp();
-    docs.forEach(doc => batch.set(_colRef(uid, col).doc(), { ...doc, createdAt: ts }));
-    await batch.commit();
+    const updates = {};
+    const ts = Date.now();
+    docs.forEach(doc => {
+      const key = _ref(_colRef(uid, col)).push().key;
+      updates[`${_colRef(uid, col)}/${key}`] = { ...doc, createdAt: ts };
+    });
+    await _ref('/').update(updates);
   }
 };
