@@ -1053,28 +1053,53 @@ async function importExcel(input) {
         }
       }
 
-      // ── CARTÃO DE CRÉDITO (col indices: 2=Nome, 3=Parcelas, 5=Data, 6=Cat, 7=Valor) ──
+      // ── CARTÃO DE CRÉDITO → importar como PRESTAÇÕES ──
+      // col indices: 2=Nome, 3=Parcelas, 5=Data início, 6=Categoria, 7=Valor mensal
       if (creditStart > 0) {
         for (let i = creditStart; i < Math.min(creditStart + 30, rows.length); i++) {
           const r = rows[i];
-          if (!r[2]) break;
+          if (r[2] === null || r[2] === undefined) break;
           const nome = String(r[2]).trim();
           const val  = parseFloat(r[7]);
           if (!nome || isNaN(val) || val <= 0) continue;
 
-          let dateStr = todayISO();
+          // ── Converter parcelas: pode vir como número, string, ou Date (bug Excel) ──
+          let totalMonths = 1;
+          const rawParcelas = r[3];
+          if (rawParcelas instanceof Date) {
+            // Excel serializou o número como data — calcular dias desde Jan 1, 1900
+            // datetime(1900,1,6) - datetime(1900,1,1) = 5 dias → 5 parcelas
+            const epoch = new Date(1900, 0, 1); // Jan 1, 1900
+            const diffDays = Math.round((rawParcelas - epoch) / (1000 * 60 * 60 * 24));
+            totalMonths = Math.max(1, diffDays);
+          } else if (rawParcelas !== null && rawParcelas !== undefined) {
+            totalMonths = Math.max(1, parseInt(rawParcelas) || 1);
+          }
+
+          // ── Data de início ──
+          let startMonth = month;
+          let startYear  = year;
           if (r[5]) {
             try {
               const d = r[5] instanceof Date ? r[5] : new Date(r[5]);
-              if (!isNaN(d)) dateStr = d.toISOString().split('T')[0];
+              if (!isNaN(d)) { startMonth = d.getMonth() + 1; startYear = d.getFullYear(); }
             } catch(e) {}
           }
 
+          // ── Calcular data de fim ──
+          let endMonth = startMonth + totalMonths - 1;
+          let endYear  = startYear;
+          while (endMonth > 12) { endMonth -= 12; endYear++; }
+
+          const totalAmount = parseFloat((val * totalMonths).toFixed(2));
+
           creditBatch.push({
             name: nome, amount: val,
-            installments: parseInt(r[3]) || 1,
-            category: r[6] || 'Outro',
-            date: dateStr, month, year, type: 'credit'
+            totalMonths, startMonth, startYear,
+            endMonth, endYear, totalAmount,
+            category: r[6] || 'Prestações',
+            paymentType: 'Crédito',
+            paid: {}
           });
           totalCredit++;
         }
@@ -1085,12 +1110,12 @@ async function importExcel(input) {
     const saves = [];
     if (fixedBatch.length)  saves.push(DB.importBatch(APP.uid, 'fixedExpenses', fixedBatch));
     if (txBatch.length)     saves.push(DB.importBatch(APP.uid, 'transactions',  txBatch));
-    if (creditBatch.length) saves.push(DB.importBatch(APP.uid, 'creditCard',    creditBatch));
+    if (creditBatch.length) saves.push(DB.importBatch(APP.uid, 'prestacoes',   creditBatch));
     await Promise.all(saves);
 
     const total = totalFixed + totalTx + totalCredit;
     statusEl.style.color = 'var(--color-positive)';
-    statusEl.textContent = `✅ Importados: ${totalFixed} fixos · ${totalTx} gastos · ${totalCredit} créditos (${total} total)`;
+    statusEl.textContent = `✅ Importados: ${totalFixed} fixos · ${totalTx} gastos · ${totalCredit} prestações (${total} total)`;
     showToast(`${total} registos importados ✓`);
     await loadDashboard();
 
