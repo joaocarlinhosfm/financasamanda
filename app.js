@@ -8,14 +8,15 @@ const MONTH_NAMES = [
 ];
 const DEFAULT_CATEGORIES = [
   'Assinaturas','Beleza','Contas','Despesas eventuais','Eletrônicos',
-  'Lazer','Mercado','Necessidades','Presentes','Restaurante',
+  'Lazer','Mercado','Necessidades','Presentes','Prestações','Restaurante',
   'Roupas','Saúde','Transporte','Saídas'
 ];
 const CATEGORY_ICONS = {
   'Assinaturas':'📱','Beleza':'💄','Contas':'🏠','Despesas eventuais':'🎲',
   'Eletrônicos':'💻','Lazer':'🎉','Mercado':'🛒','Necessidades':'🧺',
-  'Presentes':'🎁','Restaurante':'🍽️','Roupas':'👗','Saúde':'💊',
-  'Transporte':'🚗','Saídas':'🌙','Salário':'💰','Outro':'📌',
+  'Presentes':'🎁','Prestações':'💳','Restaurante':'🍽️','Roupas':'👗',
+  'Saúde':'💊','Transporte':'🚗','Saídas':'🌙','Poupança':'🐷',
+  'Salário':'💰','Outro':'📌',
 };
 
 const APP = {
@@ -117,7 +118,16 @@ async function initApp(user) {
   APP.uid = user.uid; APP.user = user;
   const saved = await DB.getSettings(APP.uid);
   if (saved) APP.settings = { ...APP.settings, ...saved };
-  if (!APP.settings.categories?.length) APP.settings.categories = [...DEFAULT_CATEGORIES];
+  if (!APP.settings.categories?.length) {
+    APP.settings.categories = [...DEFAULT_CATEGORIES];
+  } else {
+    // Garantir que categorias novas (Prestações, Poupança) estão presentes
+    const missing = DEFAULT_CATEGORIES.filter(c => !APP.settings.categories.includes(c));
+    if (missing.length) {
+      APP.settings.categories = [...APP.settings.categories, ...missing].sort();
+      await DB.saveSettings(APP.uid, APP.settings);
+    }
+  }
   setupNavigation(); setupMonthNav(); setupTypeSelector(); setupAnnualYearNav();
   updateMonthDisplay(); await loadDashboard();
   updateFirebaseStatus(true);
