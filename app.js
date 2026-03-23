@@ -510,7 +510,8 @@ function openAddTransaction() {
   document.getElementById('tx-date').value = todayISO();
   // Reset tipo
   document.querySelectorAll('.type-btn').forEach((b,i) => b.classList.toggle('active', i===0));
-  document.getElementById('installments-group').style.display = 'none';
+  const instGroup = document.getElementById('installments-group');
+  if (instGroup) instGroup.style.display = 'none';
   document.getElementById('payment-type-group').style.display = 'none';
   openModal('modal-add-transaction');
 }
@@ -537,7 +538,7 @@ function setupTypeSelector() {
 
       document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      document.getElementById('installments-group').style.display = 'none'; // já não usado
+      const ig = document.getElementById('installments-group'); if (ig) ig.style.display = 'none';
       document.getElementById('payment-type-group').style.display = type==='fixed' ? 'flex':'none';
       document.getElementById('category-label').textContent = type==='income' ? 'Fonte':'Categoria';
       populateCategorySelect(type);
@@ -979,7 +980,7 @@ function openModal(id) {
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'));
-  ['tx-name','tx-amount','tx-installments'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['tx-name','tx-amount'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
 }
 
 
