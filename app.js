@@ -956,15 +956,150 @@ async function importExcel(input) {
   const file = input.files?.[0];
   if (!file) return;
   const statusEl = document.getElementById('import-status');
-  if (typeof XLSX==='undefined') { statusEl.textContent='⚠️ Parser Excel não carregado.'; return; }
+  statusEl.style.color = 'var(--color-text-muted)';
+
+  if (typeof XLSX === 'undefined') {
+    statusEl.textContent = '⚠️ Parser Excel não carregado. Verifica a ligação.';
+    return;
+  }
+
   statusEl.textContent = '⏳ A ler o ficheiro…';
+
   try {
-    const wb = XLSX.read(await file.arrayBuffer(), { type:'array' });
-    const monthSheets = wb.SheetNames.filter(s=>MONTH_NAMES.includes(s));
-    if (!monthSheets.length) { statusEl.textContent='⚠️ Não reconheço a estrutura desta planilha.'; return; }
-    statusEl.textContent = `✓ Ficheiro válido — ${monthSheets.length} meses encontrados. (Importação completa disponível em breve)`;
-    showToast('Ficheiro reconhecido ✓');
-  } catch(e) { statusEl.textContent='⚠️ Erro ao ler o ficheiro.'; }
+    const wb = XLSX.read(await file.arrayBuffer(), { type:'array', cellDates:true });
+    const monthSheets = wb.SheetNames.filter(s => MONTH_NAMES.includes(s));
+
+    if (!monthSheets.length) {
+      statusEl.textContent = '⚠️ Não reconheço a estrutura desta planilha.';
+      return;
+    }
+
+    // Confirm before importing
+    const ok = await showConfirm({
+      icon: '📂',
+      title: 'Importar planilha',
+      message: `Encontrei ${monthSheets.length} meses. Os dados serão adicionados ao app sem apagar os existentes. Continuar?`,
+      confirmText: 'Importar',
+      danger: false
+    });
+    if (!ok) { statusEl.textContent = ''; input.value = ''; return; }
+
+    statusEl.textContent = '⏳ A importar…';
+
+    const fixedBatch = [], txBatch = [], creditBatch = [];
+    let totalFixed = 0, totalTx = 0, totalCredit = 0;
+
+    for (const sheetName of monthSheets) {
+      const monthIndex = MONTH_NAMES.indexOf(sheetName); // 0-based
+      const month = monthIndex + 1;
+      // Detect year from sheet name context — use current year as default
+      const year = APP.currentYear;
+
+      const ws   = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
+
+      // ── Find section start rows ──
+      let fixosStart = -1, gastosStart = -1, creditStart = -1;
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        if (r[2] === 'Nome' && r[4] === 'Pago?') { fixosStart = i + 1; }
+        if (r[9] === 'Nome' && r[10] === 'Data')  { gastosStart = i + 1; }
+        if (r[2] === 'Nome' && r[3] === 'Parcelas') { creditStart = i + 1; }
+      }
+
+      // ── FIXOS (col indices: 2=Nome, 4=Pago, 5=Tipo, 6=Cat, 7=Valor) ──
+      if (fixosStart > 0) {
+        for (let i = fixosStart; i < Math.min(fixosStart + 30, rows.length); i++) {
+          const r = rows[i];
+          if (!r[2] || r[2] === 'Total de Cartão de Crédito') break;
+          const nome = String(r[2]).trim();
+          const val  = parseFloat(r[7]);
+          if (!nome || isNaN(val) || val <= 0) continue;
+          fixedBatch.push({
+            name: nome, amount: val,
+            category: r[6] || 'Outro',
+            paymentType: r[5] || 'Débito',
+            paid: r[4] === true,
+            month, year, type: 'fixed'
+          });
+          totalFixed++;
+        }
+      }
+
+      // ── GASTOS DO MÊS (col indices: 9=Nome, 10=Data, 11=Cat, 12=Valor) ──
+      if (gastosStart > 0) {
+        for (let i = gastosStart; i < Math.min(gastosStart + 60, rows.length); i++) {
+          const r = rows[i];
+          if (!r[9]) continue;
+          const nome = String(r[9]).trim();
+          const val  = parseFloat(r[12]);
+          if (!nome || isNaN(val) || val <= 0) continue;
+
+          // Parse date
+          let dateStr = todayISO();
+          if (r[10]) {
+            try {
+              const d = r[10] instanceof Date ? r[10] : new Date(r[10]);
+              if (!isNaN(d)) dateStr = d.toISOString().split('T')[0];
+            } catch(e) {}
+          }
+
+          txBatch.push({
+            name: nome, amount: val,
+            category: r[11] || 'Outro',
+            date: dateStr, month, year, type: 'variable'
+          });
+          totalTx++;
+        }
+      }
+
+      // ── CARTÃO DE CRÉDITO (col indices: 2=Nome, 3=Parcelas, 5=Data, 6=Cat, 7=Valor) ──
+      if (creditStart > 0) {
+        for (let i = creditStart; i < Math.min(creditStart + 30, rows.length); i++) {
+          const r = rows[i];
+          if (!r[2]) break;
+          const nome = String(r[2]).trim();
+          const val  = parseFloat(r[7]);
+          if (!nome || isNaN(val) || val <= 0) continue;
+
+          let dateStr = todayISO();
+          if (r[5]) {
+            try {
+              const d = r[5] instanceof Date ? r[5] : new Date(r[5]);
+              if (!isNaN(d)) dateStr = d.toISOString().split('T')[0];
+            } catch(e) {}
+          }
+
+          creditBatch.push({
+            name: nome, amount: val,
+            installments: parseInt(r[3]) || 1,
+            category: r[6] || 'Outro',
+            date: dateStr, month, year, type: 'credit'
+          });
+          totalCredit++;
+        }
+      }
+    }
+
+    // ── Save to Firebase ──
+    const saves = [];
+    if (fixedBatch.length)  saves.push(DB.importBatch(APP.uid, 'fixedExpenses', fixedBatch));
+    if (txBatch.length)     saves.push(DB.importBatch(APP.uid, 'transactions',  txBatch));
+    if (creditBatch.length) saves.push(DB.importBatch(APP.uid, 'creditCard',    creditBatch));
+    await Promise.all(saves);
+
+    const total = totalFixed + totalTx + totalCredit;
+    statusEl.style.color = 'var(--color-positive)';
+    statusEl.textContent = `✅ Importados: ${totalFixed} fixos · ${totalTx} gastos · ${totalCredit} créditos (${total} total)`;
+    showToast(`${total} registos importados ✓`);
+    await loadDashboard();
+
+  } catch(e) {
+    console.error('[importExcel]', e);
+    statusEl.style.color = 'var(--color-primary)';
+    statusEl.textContent = '⚠️ Erro ao importar: ' + e.message;
+  }
+
   input.value = '';
 }
 
