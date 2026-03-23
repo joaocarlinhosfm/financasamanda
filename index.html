@@ -6,327 +6,434 @@
   <meta name="theme-color" content="#993556">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Finança Rosa">
   <title>Finança Rosa</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- LOADING -->
-  <div class="loading-overlay" id="loading-overlay">
-    <div class="loading-logo">🌸</div>
-    <div class="loading-spinner"></div>
-    <p class="loading-text">A carregar…</p>
-  </div>
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-logo">🌸</div>
+  <div class="loading-spinner"></div>
+  <p class="loading-text">A carregar…</p>
+</div>
 
-  <!-- ══════════════════════════════════════════
-       ECRÃ DE LOGIN
-  ══════════════════════════════════════════ -->
-  <div id="login-screen" class="login-screen hidden">
-    <div class="login-bg-blob"></div>
-    <div class="login-content">
-      <div class="login-logo">🌸</div>
-      <h1 class="login-title">Finança Rosa</h1>
-      <p class="login-subtitle">O teu dinheiro, organizado com carinho.</p>
-
-      <div class="login-card">
-        <button class="btn-google" id="btn-google-login">
-          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-          Entrar com Google
-        </button>
-
-        <div class="login-divider"><span>ou</span></div>
-
-        <button class="btn-anonymous" id="btn-anonymous-login">
-          Continuar sem conta
-        </button>
-
-        <p class="login-note">Sem conta, os teus dados ficam guardados apenas neste dispositivo.</p>
-      </div>
+<!-- LOGIN -->
+<div id="login-screen" class="login-screen hidden">
+  <div class="login-bg-blob"></div>
+  <div class="login-content">
+    <div class="login-logo">🌸</div>
+    <h1 class="login-title">Finança Rosa</h1>
+    <p class="login-subtitle">O teu dinheiro, organizado com carinho.</p>
+    <div class="login-card">
+      <button class="btn-google" id="btn-google-login">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Entrar com Google
+      </button>
+      <div class="login-divider"><span>ou</span></div>
+      <button class="btn-anonymous" id="btn-anonymous-login">Continuar sem conta</button>
+      <p class="login-note">Sem conta, os teus dados ficam guardados apenas neste dispositivo.</p>
     </div>
   </div>
+</div>
 
-  <!-- ══════════════════════════════════════════
-       APP SHELL
-  ══════════════════════════════════════════ -->
-  <div id="app" class="hidden">
+<!-- APP -->
+<div id="app" class="hidden">
 
-    <header class="app-header" id="app-header">
-      <button class="btn-month-nav" id="btn-prev-month">‹</button>
-      <span class="header-month" id="header-month">Março 2026</span>
-      <button class="btn-month-nav" id="btn-next-month">›</button>
-    </header>
+  <header class="app-header" id="app-header">
+    <button class="btn-month-nav" id="btn-prev-month">‹</button>
+    <span class="header-month" id="header-month">Março 2026</span>
+    <button class="btn-month-nav" id="btn-next-month">›</button>
+  </header>
 
-    <main class="app-main" id="app-main">
+  <main class="app-main">
 
-      <!-- INÍCIO -->
-      <div class="screen active" id="screen-home">
-        <div class="greeting-card">
-          <p class="greeting-hello" id="greeting-text">Olá 👋</p>
-          <h1 class="greeting-month" id="greeting-month">Março 2026</h1>
+    <!-- INÍCIO -->
+    <div class="screen active" id="screen-home">
+      <div class="greeting-card">
+        <p class="greeting-hello" id="greeting-text">Olá 👋</p>
+        <h1 class="greeting-month" id="greeting-month">Março 2026</h1>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-card">
+          <span class="summary-label">Entradas</span>
+          <span class="summary-value positive" id="total-income">€0,00</span>
         </div>
-        <div class="summary-grid">
-          <div class="summary-card">
-            <span class="summary-label">Entradas</span>
-            <span class="summary-value positive" id="total-income">€0,00</span>
-          </div>
-          <div class="summary-card">
-            <span class="summary-label">Gastos</span>
-            <span class="summary-value negative" id="total-expenses">€0,00</span>
-          </div>
-          <div class="summary-card full-width">
-            <div>
-              <span class="summary-label">Saldo do mês</span>
-              <span class="summary-value" id="total-balance">€0,00</span>
-            </div>
-            <div class="saldo-badge" id="saldo-badge">—</div>
-          </div>
+        <div class="summary-card">
+          <span class="summary-label">Gastos</span>
+          <span class="summary-value negative" id="total-expenses">€0,00</span>
         </div>
-        <div class="section-card">
-          <h2 class="section-title">Gastos por categoria</h2>
-          <div id="category-bars"><p class="empty-state">Ainda sem gastos este mês.</p></div>
-        </div>
-        <div class="section-card">
-          <h2 class="section-title">Fixos do mês</h2>
-          <div id="fixed-status"><p class="empty-state">Sem gastos fixos configurados.</p></div>
+        <div class="summary-card full-width">
+          <div><span class="summary-label">Saldo do mês</span><span class="summary-value" id="total-balance">€0,00</span></div>
+          <div class="saldo-badge" id="saldo-badge">—</div>
         </div>
       </div>
-
-      <!-- GASTOS -->
-      <div class="screen" id="screen-gastos">
-        <div class="screen-header-inner">
-          <h2 class="screen-title-inner">Lançamentos</h2>
-          <button class="btn-primary small" onclick="openAddTransaction()">+ Novo</button>
-        </div>
-        <div class="filter-tabs" id="filter-tabs">
-          <button class="filter-tab active" data-filter="all">Todos</button>
-          <button class="filter-tab" data-filter="variable">Variáveis</button>
-          <button class="filter-tab" data-filter="fixed">Fixos</button>
-          <button class="filter-tab" data-filter="credit">Crédito</button>
-          <button class="filter-tab" data-filter="income">Entradas</button>
-        </div>
-        <div id="transactions-list"><p class="empty-state">Ainda sem lançamentos este mês.</p></div>
+      <!-- FIX: Barra de salário -->
+      <div class="section-card" id="salary-bar-section" style="display:none;padding:14px 16px 10px;"></div>
+      <div class="section-card">
+        <h2 class="section-title">Gastos por categoria</h2>
+        <div id="category-bars"><p class="empty-state">Ainda sem gastos este mês.</p></div>
       </div>
-
-      <!-- ANUAL -->
-      <div class="screen" id="screen-anual">
-        <div class="screen-header-inner" style="margin-bottom:20px;">
-          <h2 class="screen-title-inner">Panorama Anual</h2>
-          <span class="year-badge" id="annual-year-badge">2026</span>
+      <div class="section-card">
+        <div class="fixed-section-header">
+          <h2 class="section-title" style="margin-bottom:0;">Fixos do mês</h2>
+          <button class="btn-copy-fixed" onclick="copyFixedFromPrevious()">🔄 Copiar mês anterior</button>
         </div>
-        <div class="section-card" style="padding:16px 8px;">
-          <canvas id="annual-chart" height="220"></canvas>
-        </div>
-        <div id="annual-summary"></div>
+        <div id="fixed-status"><p class="empty-state">Sem gastos fixos este mês.</p></div>
       </div>
-
-      <!-- METAS -->
-      <div class="screen" id="screen-metas">
-        <div class="screen-header-inner">
-          <h2 class="screen-title-inner">Metas & Poupanças</h2>
-          <button class="btn-primary small" onclick="openAddGoal()">+ Meta</button>
+      <div class="section-card">
+        <div class="fixed-section-header">
+          <h2 class="section-title" style="margin-bottom:0;">Prestações</h2>
+          <button class="btn-copy-fixed" onclick="openAddPrestacao()">+ Nova</button>
         </div>
-        <div class="section-card" id="investments-card">
-          <h3 class="section-title">Investimentos — <span id="inv-month-label">Março</span></h3>
-          <div id="investments-form-inline"></div>
-        </div>
-        <div id="goals-list"><p class="empty-state">Sem metas criadas.</p></div>
+        <div id="prestacoes-status"><p class="empty-state">Sem prestações ativas.</p></div>
       </div>
-
-      <!-- CONFIG -->
-      <div class="screen" id="screen-config">
-        <div class="screen-header-inner" style="margin-bottom:20px;">
-          <h2 class="screen-title-inner">Definições</h2>
-        </div>
-
-        <!-- Conta -->
-        <div class="section-card" id="account-card">
-          <!-- preenchido por JS consoante o tipo de conta -->
-        </div>
-
-        <!-- Perfil -->
-        <div class="section-card">
-          <h3 class="section-title">Perfil</h3>
-          <div class="form-group">
-            <label class="form-label">O teu nome</label>
-            <input type="text" class="form-input" id="config-name" placeholder="Ex: Ana">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Salário mensal (€)</label>
-            <input type="number" class="form-input" id="config-salary" placeholder="0,00">
-          </div>
-          <button class="btn-primary full-width" onclick="saveSettings()">Guardar perfil</button>
-        </div>
-
-        <!-- Importar Excel -->
-        <div class="section-card">
-          <h3 class="section-title">Importar planilha Excel</h3>
-          <p class="helper-text">Importa os dados da tua planilha atual (.xlsx) para o app.</p>
-          <label class="btn-outline full-width" for="import-file" style="margin-top:10px;cursor:pointer;">
-            📂 Escolher ficheiro .xlsx
-          </label>
-          <input type="file" id="import-file" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this)">
-          <p class="import-status" id="import-status"></p>
-        </div>
-
-        <!-- Categorias -->
-        <div class="section-card">
-          <h3 class="section-title">Categorias</h3>
-          <div id="categories-list"></div>
-          <button class="btn-outline full-width" style="margin-top:10px;" onclick="openAddCategory()">+ Nova categoria</button>
-        </div>
-
-        <!-- Exportar -->
-        <div class="section-card danger-card">
-          <h3 class="section-title">Exportar dados</h3>
-          <p class="helper-text" style="margin-bottom:10px;">Faz download de todos os teus dados em formato JSON.</p>
-          <button class="btn-outline full-width" onclick="exportData()">📤 Exportar JSON</button>
-        </div>
-
-        <!-- Firebase status -->
-        <div class="firebase-info-card">
-          <span class="firebase-dot"></span>
-          <span id="firebase-status-text">A verificar ligação…</span>
-        </div>
-      </div>
-
-    </main>
-
-    <!-- FAB -->
-    <button class="fab" id="fab-add" onclick="openAddTransaction()">+</button>
-
-    <!-- BOTTOM NAV -->
-    <nav class="bottom-nav" id="bottom-nav">
-      <button class="nav-item active" data-screen="home">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        <span class="nav-label">Início</span>
-      </button>
-      <button class="nav-item" data-screen="gastos">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        <span class="nav-label">Gastos</span>
-      </button>
-      <button class="nav-item" data-screen="anual">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        <span class="nav-label">Anual</span>
-      </button>
-      <button class="nav-item" data-screen="metas">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-        <span class="nav-label">Metas</span>
-      </button>
-      <button class="nav-item" data-screen="config">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        <span class="nav-label">Config</span>
-      </button>
-    </nav>
-
-  </div><!-- /app -->
-
-  <!-- MODAL OVERLAY -->
-  <div class="modal-overlay" id="modal-overlay" onclick="closeModal()"></div>
-
-  <!-- MODAL: ADICIONAR LANÇAMENTO -->
-  <div class="modal" id="modal-add-transaction">
-    <div class="modal-drag-bar"></div>
-    <div class="modal-header">
-      <h3 class="modal-title">Novo lançamento</h3>
-      <button class="btn-modal-close" onclick="closeModal()">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="type-selector" id="type-selector">
-        <button class="type-btn active" data-type="variable">Variável</button>
-        <button class="type-btn" data-type="fixed">Fixo</button>
-        <button class="type-btn" data-type="credit">Crédito</button>
-        <button class="type-btn" data-type="income">Entrada</button>
+
+    <!-- GASTOS -->
+    <div class="screen" id="screen-gastos">
+      <div class="screen-header-inner">
+        <h2 class="screen-title-inner">Lançamentos</h2>
+        <button class="btn-primary small" onclick="openAddTransaction()">+ Novo</button>
       </div>
-      <div class="form-group">
-        <label class="form-label">Nome / Descrição</label>
-        <input type="text" class="form-input" id="tx-name" placeholder="Ex: Supermercado Continente">
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">Todos</button>
+        <button class="filter-tab" data-filter="variable">Variáveis</button>
+        <button class="filter-tab" data-filter="fixed">Fixos</button>
+        <button class="filter-tab" data-filter="credit">Prestações</button>
+        <button class="filter-tab" data-filter="income">Entradas</button>
       </div>
-      <div class="form-group">
-        <label class="form-label">Valor (€)</label>
-        <input type="number" class="form-input" id="tx-amount" placeholder="0,00" step="0.01" min="0" inputmode="decimal">
+      <div id="transactions-list"><p class="empty-state">Ainda sem lançamentos este mês.</p></div>
+    </div>
+
+    <!-- ANUAL — FIX: navegação de ano própria, sem header de mês -->
+    <div class="screen" id="screen-anual">
+      <div class="annual-year-nav">
+        <button class="btn-year-nav" id="btn-prev-year">‹</button>
+        <span class="annual-year-display" id="annual-year-display">2026</span>
+        <button class="btn-year-nav" id="btn-next-year">›</button>
       </div>
-      <div class="form-group">
-        <label class="form-label" id="category-label">Categoria</label>
-        <select class="form-input" id="tx-category"></select>
+      <div class="section-card" style="padding:16px 8px;">
+        <canvas id="annual-chart" height="220"></canvas>
       </div>
-      <div class="form-group">
-        <label class="form-label">Data</label>
-        <input type="date" class="form-input" id="tx-date">
+      <div id="annual-summary"></div>
+    </div>
+
+    <!-- METAS -->
+    <div class="screen" id="screen-metas">
+      <div class="screen-header-inner">
+        <h2 class="screen-title-inner">Metas & Poupanças</h2>
+        <button class="btn-primary small" onclick="openAddGoal()">+ Meta</button>
       </div>
-      <div class="form-group" id="installments-group" style="display:none">
-        <label class="form-label">Número de parcelas</label>
-        <input type="number" class="form-input" id="tx-installments" placeholder="1" min="1" max="48">
+      <div class="section-card">
+        <h3 class="section-title">Investimentos — <span id="inv-month-label">Março</span></h3>
+        <div id="investments-form-inline"></div>
       </div>
-      <div class="form-group" id="payment-type-group" style="display:none">
-        <label class="form-label">Tipo de pagamento</label>
-        <select class="form-input" id="tx-payment-type">
-          <option value="Débito">Débito</option>
-          <option value="Crédito">Crédito</option>
-          <option value="Transferência">Transferência</option>
-          <option value="MB Way">MB Way</option>
+      <div id="goals-list"><p class="empty-state">Sem metas criadas.</p></div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="screen" id="screen-config">
+      <div class="screen-header-inner" style="margin-bottom:20px;">
+        <h2 class="screen-title-inner">Definições</h2>
+      </div>
+      <div class="section-card" id="account-card"></div>
+      <div class="section-card">
+        <h3 class="section-title">Perfil</h3>
+        <div class="form-group">
+          <label class="form-label">O teu nome</label>
+          <input type="text" class="form-input" id="config-name" placeholder="Ex: Ana">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Salário mensal (€)</label>
+          <input type="number" class="form-input" id="config-salary" placeholder="0,00" inputmode="decimal">
+        </div>
+        <button class="btn-primary full-width" onclick="saveSettings()">Guardar perfil</button>
+      </div>
+      <div class="section-card">
+        <h3 class="section-title">Importar planilha Excel</h3>
+        <p class="helper-text">Importa os dados da tua planilha atual (.xlsx) para o app.</p>
+        <label class="btn-outline full-width" for="import-file" style="margin-top:10px;cursor:pointer;">📂 Escolher ficheiro .xlsx</label>
+        <input type="file" id="import-file" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this)">
+        <p class="import-status" id="import-status"></p>
+      </div>
+      <div class="section-card">
+        <h3 class="section-title">Categorias</h3>
+        <div id="categories-list"></div>
+        <button class="btn-outline full-width" style="margin-top:10px;" onclick="openAddCategory()">+ Nova categoria</button>
+      </div>
+      <div class="section-card">
+        <h3 class="section-title">Prestações</h3>
+        <div id="all-prestacoes-list"><p class="empty-state" style="padding:8px 0;">A carregar…</p></div>
+        <button class="btn-outline full-width" style="margin-top:10px;" onclick="openAddPrestacao()">+ Nova prestação</button>
+      </div>
+      <div class="section-card danger-card">
+        <h3 class="section-title">Exportar dados</h3>
+        <p class="helper-text" style="margin-bottom:10px;">Faz download de todos os teus dados em formato JSON.</p>
+        <button class="btn-outline full-width" onclick="exportData()">📤 Exportar JSON</button>
+      </div>
+      <div class="firebase-info-card">
+        <span class="firebase-dot"></span>
+        <span id="firebase-status-text">A verificar ligação…</span>
+      </div>
+    </div>
+
+  </main>
+
+  <button class="fab" id="fab-add" onclick="openAddTransaction()">+</button>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-screen="home">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span class="nav-label">Início</span>
+    </button>
+    <button class="nav-item" data-screen="gastos">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span class="nav-label">Gastos</span>
+    </button>
+    <button class="nav-item" data-screen="anual">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span class="nav-label">Anual</span>
+    </button>
+    <button class="nav-item" data-screen="metas">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+      <span class="nav-label">Metas</span>
+    </button>
+    <button class="nav-item" data-screen="config">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="nav-label">Config</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ═══ DIALOG (substitui confirm/prompt) ═══ -->
+<div class="dialog-overlay" id="dialog-overlay">
+  <div class="dialog-box">
+    <div class="dialog-icon" id="dialog-icon"></div>
+    <h3 class="dialog-title" id="dialog-title"></h3>
+    <p class="dialog-message" id="dialog-message"></p>
+    <input type="text" class="dialog-input" id="dialog-input" style="display:none">
+    <div class="dialog-buttons" id="dialog-buttons"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL OVERLAY ═══ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal()"></div>
+
+<!-- MODAL: ADICIONAR LANÇAMENTO -->
+<div class="modal" id="modal-add-transaction">
+  <div class="modal-drag-bar"></div>
+  <div class="modal-header">
+    <h3 class="modal-title">Novo lançamento</h3>
+    <button class="btn-modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="type-selector">
+      <button class="type-btn active" data-type="variable">Variável</button>
+      <button class="type-btn" data-type="fixed">Fixo</button>
+      <button class="type-btn" data-type="credit">Crédito</button>
+      <button class="type-btn" data-type="income">Entrada</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nome / Descrição</label>
+      <input type="text" class="form-input" id="tx-name" placeholder="Ex: Supermercado Continente">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Valor (€)</label>
+      <input type="number" class="form-input" id="tx-amount" placeholder="0,00" step="0.01" min="0" inputmode="decimal">
+    </div>
+    <div class="form-group">
+      <label class="form-label" id="category-label">Categoria</label>
+      <select class="form-input" id="tx-category"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Data</label>
+      <input type="date" class="form-input" id="tx-date">
+    </div>
+    <div class="form-group" id="installments-group" style="display:none">
+      <label class="form-label">Número de parcelas</label>
+      <input type="number" class="form-input" id="tx-installments" placeholder="1" min="1" max="48">
+    </div>
+    <div class="form-group" id="payment-type-group" style="display:none">
+      <label class="form-label">Tipo de pagamento</label>
+      <select class="form-input" id="tx-payment-type">
+        <option value="Débito">Débito</option>
+        <option value="Crédito">Crédito</option>
+        <option value="Transferência">Transferência</option>
+        <option value="MB Way">MB Way</option>
+      </select>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-outline" onclick="closeModal()">Cancelar</button>
+    <button class="btn-primary" id="btn-save-transaction" onclick="saveTransaction()">Guardar</button>
+  </div>
+</div>
+
+<!-- MODAL: AÇÕES DO LANÇAMENTO (editar / apagar) -->
+<div class="modal" id="modal-tx-actions">
+  <div class="modal-drag-bar"></div>
+  <div class="modal-body" style="padding-top:16px;">
+    <div class="tx-action-info">
+      <span class="tx-action-name" id="tx-action-name">Lançamento</span>
+      <span class="tx-action-amount" id="tx-action-amount"></span>
+      <span class="tx-action-date" id="tx-action-date"></span>
+    </div>
+    <button class="tx-action-btn" onclick="editCurrentTx()">
+      <span class="tx-action-btn-icon">✏️</span>
+      <span>Editar lançamento</span>
+      <span class="tx-action-chevron">›</span>
+    </button>
+    <button class="tx-action-btn danger" onclick="deleteCurrentTx()">
+      <span class="tx-action-btn-icon">🗑️</span>
+      <span>Apagar lançamento</span>
+      <span class="tx-action-chevron">›</span>
+    </button>
+    <button class="btn-outline full-width" style="margin-top:8px;" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR LANÇAMENTO -->
+<div class="modal" id="modal-edit-transaction">
+  <div class="modal-drag-bar"></div>
+  <div class="modal-header">
+    <h3 class="modal-title">Editar lançamento</h3>
+    <button class="btn-modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="tx-edit-id">
+    <input type="hidden" id="tx-edit-col">
+    <div class="form-group">
+      <label class="form-label">Nome / Descrição</label>
+      <input type="text" class="form-input" id="tx-edit-name" placeholder="Ex: Supermercado">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Valor (€)</label>
+      <input type="number" class="form-input" id="tx-edit-amount" placeholder="0,00" step="0.01" min="0" inputmode="decimal">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categoria</label>
+      <select class="form-input" id="tx-edit-category"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Data</label>
+      <input type="date" class="form-input" id="tx-edit-date">
+    </div>
+    <div class="form-group" id="tx-edit-install-group" style="display:none">
+      <label class="form-label">Número de parcelas</label>
+      <input type="number" class="form-input" id="tx-edit-installments" placeholder="1" min="1" max="48">
+    </div>
+    <div class="form-group" id="tx-edit-payment-group" style="display:none">
+      <label class="form-label">Tipo de pagamento</label>
+      <select class="form-input" id="tx-edit-payment-type">
+        <option value="Débito">Débito</option>
+        <option value="Crédito">Crédito</option>
+        <option value="Transferência">Transferência</option>
+        <option value="MB Way">MB Way</option>
+      </select>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-outline" onclick="closeModal()">Cancelar</button>
+    <button class="btn-primary btn-save-edit" onclick="saveEditTransaction()">Guardar</button>
+  </div>
+</div>
+
+<!-- MODAL: CONTRIBUIÇÃO META -->
+<div class="modal" id="modal-add-contribution">
+  <div class="modal-drag-bar"></div>
+  <div class="modal-header">
+    <h3 class="modal-title">Adicionar à meta</h3>
+    <button class="btn-modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="contrib-goal-id">
+    <div class="contrib-goal-info">
+      <span class="contrib-goal-name" id="contrib-goal-name">Meta</span>
+      <div class="contrib-goal-progress">
+        <span id="contrib-current">€0</span><span style="color:var(--color-text-hint)"> / </span><span id="contrib-target">€0</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Valor a adicionar (€)</label>
+      <input type="number" class="form-input" id="contrib-amount" placeholder="0,00" step="0.01" min="0.01" inputmode="decimal" style="font-size:24px;font-weight:600;text-align:center;">
+    </div>
+    <div class="contrib-month-info">📅 A registar em <strong id="contrib-month-label">Março 2026</strong></div>
+    <!-- FIX: opção registar como gasto -->
+    <label class="checkbox-row">
+      <input type="checkbox" id="contrib-as-expense">
+      <span>Registar também como gasto no mês</span>
+    </label>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-outline" onclick="closeModal()">Cancelar</button>
+    <button class="btn-primary" onclick="saveContribution()">Guardar</button>
+  </div>
+</div>
+
+<!-- MODAL: NOVA PRESTAÇÃO -->
+<div class="modal" id="modal-add-prestacao">
+  <div class="modal-drag-bar"></div>
+  <div class="modal-header">
+    <h3 class="modal-title">Nova prestação</h3>
+    <button class="btn-modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-group">
+      <label class="form-label">Nome / Descrição</label>
+      <input type="text" class="form-input" id="prest-name" placeholder="Ex: Carro, Telemóvel, Sofá…" oninput="updatePrestacaoPreview()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Valor mensal (€)</label>
+      <input type="number" class="form-input" id="prest-amount" placeholder="0,00" step="0.01" min="0" inputmode="decimal" oninput="updatePrestacaoPreview()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Número de meses</label>
+      <input type="number" class="form-input" id="prest-months" placeholder="Ex: 12, 24, 36…" min="1" max="360" inputmode="numeric" oninput="updatePrestacaoPreview()">
+    </div>
+    <div class="prest-start-row">
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Mês de início</label>
+        <select class="form-input" id="prest-start-month" onchange="updatePrestacaoPreview()">
+          <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+          <option value="3">Março</option><option value="4">Abril</option>
+          <option value="5">Maio</option><option value="6">Junho</option>
+          <option value="7">Julho</option><option value="8">Agosto</option>
+          <option value="9">Setembro</option><option value="10">Outubro</option>
+          <option value="11">Novembro</option><option value="12">Dezembro</option>
         </select>
       </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-outline" onclick="closeModal()">Cancelar</button>
-      <button class="btn-primary" onclick="saveTransaction()">Guardar</button>
-    </div>
-  </div>
-
-  <!-- DIALOG OVERLAY (substitui confirm/prompt do browser) -->
-  <div class="dialog-overlay" id="dialog-overlay">
-    <div class="dialog-box" id="dialog-box">
-      <div class="dialog-icon" id="dialog-icon"></div>
-      <h3 class="dialog-title" id="dialog-title"></h3>
-      <p class="dialog-message" id="dialog-message"></p>
-      <input type="text" class="dialog-input" id="dialog-input" style="display:none">
-      <div class="dialog-buttons" id="dialog-buttons"></div>
-    </div>
-  </div>
-
-  <!-- MODAL: ADICIONAR CONTRIBUIÇÃO -->
-  <div class="modal" id="modal-add-contribution">
-    <div class="modal-drag-bar"></div>
-    <div class="modal-header">
-      <h3 class="modal-title">Adicionar à meta</h3>
-      <button class="btn-modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="contrib-goal-id">
-      <div class="contrib-goal-info">
-        <span class="contrib-goal-name" id="contrib-goal-name">Meta</span>
-        <div class="contrib-goal-progress">
-          <span id="contrib-current">€0</span>
-          <span style="color:var(--color-text-hint)"> / </span>
-          <span id="contrib-target">€0</span>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Valor a adicionar (€)</label>
-        <input type="number" class="form-input" id="contrib-amount" placeholder="0,00" step="0.01" min="0.01" inputmode="decimal" style="font-size:24px;font-weight:600;text-align:center;">
-      </div>
-      <div class="contrib-month-info">
-        📅 A registar em <strong id="contrib-month-label">Março 2026</strong>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Ano</label>
+        <input type="number" class="form-input" id="prest-start-year" placeholder="2026" min="2020" max="2050" inputmode="numeric" oninput="updatePrestacaoPreview()">
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn-outline" onclick="closeModal()">Cancelar</button>
-      <button class="btn-primary" onclick="saveContribution()">Guardar</button>
+    <div class="form-group">
+      <label class="form-label">Tipo de pagamento</label>
+      <select class="form-input" id="prest-payment">
+        <option value="Débito">Débito</option>
+        <option value="Crédito">Crédito</option>
+        <option value="Transferência">Transferência</option>
+        <option value="MB Way">MB Way</option>
+      </select>
     </div>
+    <!-- Preview em tempo real -->
+    <div class="prest-preview" id="prest-preview" style="display:none;"></div>
   </div>
+  <div class="modal-footer">
+    <button class="btn-outline" onclick="closeModal()">Cancelar</button>
+    <button class="btn-primary" id="btn-save-prestacao" onclick="savePrestacao()">Criar prestação</button>
+  </div>
+</div>
 
-  <!-- TOAST -->
-  <div class="toast" id="toast"></div>
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
-  <!-- SCRIPTS -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="firebase.js"></script>
-  <script src="app.js"></script>
-
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="firebase.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

@@ -143,5 +143,35 @@ const DB = {
       updates[`${_colRef(uid, col)}/${key}`] = { ...doc, createdAt: ts };
     });
     await _ref('/').update(updates);
+  },
+
+  // Ler ano completo (para o Panorama Anual — 3 chamadas em vez de 36)
+  async getByYear(uid, col, year) {
+    const snap = await _ref(_colRef(uid, col))
+      .orderByChild('year').equalTo(year).once('value');
+    const raw = snap.val() || {};
+    return Object.entries(raw).map(([id, v]) => ({ id, ...v }));
+  },
+
+  // ── PRESTAÇÕES ────────────────────────────────────
+  // Todas as prestações do utilizador (filtragem por mês feita no app.js)
+  async getAllPrestacoes(uid) {
+    const snap = await _ref(_colRef(uid, 'prestacoes')).once('value');
+    const raw  = snap.val() || {};
+    return Object.entries(raw).map(([id, v]) => ({ id, ...v }));
+  },
+
+  async addPrestacao(uid, data) {
+    const ref = _ref(_colRef(uid, 'prestacoes')).push();
+    await ref.set({ ...data, createdAt: Date.now() });
+    return ref.key;
+  },
+
+  async deletePrestacao(uid, id) {
+    await _ref(_docRef(uid, 'prestacoes', id)).remove();
+  },
+
+  async togglePrestacaoPaid(uid, id, monthKey, paid) {
+    await _ref(`${_docRef(uid, 'prestacoes', id)}/paid/${monthKey}`).set(paid);
   }
 };

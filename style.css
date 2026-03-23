@@ -987,3 +987,158 @@ select.form-input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
+
+
+/* ═══════════════════════════════════════════
+   CORREÇÕES E NOVOS COMPONENTES
+   ═══════════════════════════════════════════ */
+
+/* ─── BARRA DE SALÁRIO ──────────────────────── */
+.salary-bar-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.salary-bar-label { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:var(--color-text-muted); }
+.salary-bar-pct { font-size:18px; font-weight:700; }
+.salary-track { height:6px; background:var(--rose-100); border-radius:3px; overflow:hidden; margin-bottom:5px; }
+.salary-fill  { height:100%; border-radius:3px; transition:width 0.5s ease; }
+.salary-detail { font-size:12px; color:var(--color-text-muted); }
+
+/* ─── FIXOS — PROGRESSO + COPIAR ────────────── */
+.fixed-section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.btn-copy-fixed {
+  font-size:11px; font-weight:500; padding:5px 10px;
+  background:var(--rose-50); border:1px solid var(--color-border);
+  border-radius:var(--radius-pill); color:var(--color-text-muted);
+  cursor:pointer; white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;
+  transition:background 0.15s;
+}
+.btn-copy-fixed:active { background:var(--rose-100); }
+.fixed-progress-header { margin-bottom:10px; }
+.fixed-progress-text { font-size:12px; color:var(--color-text-muted); display:block; margin-bottom:5px; }
+.fixed-progress-track { height:4px; background:var(--rose-100); border-radius:2px; overflow:hidden; }
+.fixed-progress-fill  { height:100%; background:var(--color-positive); border-radius:2px; transition:width 0.3s ease; }
+.paid-name { text-decoration:line-through; color:var(--color-text-hint); }
+
+/* ─── TX ITEM — chevron ─────────────────────── */
+.tx-right { display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
+.tx-chevron { font-size:16px; color:var(--color-text-hint); line-height:1; }
+
+/* ─── MODAL AÇÕES LANÇAMENTO ────────────────── */
+.tx-action-info {
+  background:var(--rose-50); border-radius:var(--radius-md);
+  padding:14px; margin-bottom:14px; text-align:center;
+}
+.tx-action-name   { display:block; font-size:16px; font-weight:600; color:var(--color-text); margin-bottom:4px; }
+.tx-action-amount { display:block; font-family:var(--font-serif); font-size:22px; color:var(--color-primary); margin-bottom:2px; }
+.tx-action-date   { display:block; font-size:12px; color:var(--color-text-muted); }
+.tx-action-btn {
+  width:100%; display:flex; align-items:center; gap:12px;
+  padding:14px; background:var(--white);
+  border:1px solid var(--color-border); border-radius:var(--radius-md);
+  font-family:var(--font-main); font-size:15px; font-weight:500;
+  color:var(--color-text); cursor:pointer; margin-bottom:8px;
+  text-align:left; transition:background 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.tx-action-btn:active { background:var(--rose-50); }
+.tx-action-btn.danger { color:var(--color-primary); border-color:var(--rose-200); }
+.tx-action-btn.danger:active { background:var(--rose-100); }
+.tx-action-btn-icon { font-size:18px; }
+.tx-action-chevron  { margin-left:auto; color:var(--color-text-hint); }
+
+/* ─── ANUAL — NAVEGAÇÃO DE ANO ──────────────── */
+.annual-year-nav {
+  display:flex; align-items:center; justify-content:center;
+  gap:24px; margin-bottom:18px; padding-top:4px;
+}
+.btn-year-nav {
+  width:40px; height:40px; border:none;
+  background:var(--rose-100); color:var(--color-primary);
+  font-size:22px; font-weight:300;
+  border-radius:50%; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn-year-nav:disabled { opacity:0.35; cursor:default; }
+.btn-year-nav:not(:disabled):active { background:var(--rose-200); }
+.annual-year-display {
+  font-family:var(--font-serif); font-size:28px;
+  color:var(--color-text);
+}
+
+/* ─── CHECKBOX ROWS ─────────────────────────── */
+.checkbox-row {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 14px;
+  background:var(--rose-50); border-radius:var(--radius-sm);
+  cursor:pointer; font-size:14px; color:var(--color-text-muted);
+}
+.checkbox-row input[type="checkbox"] {
+  width:18px; height:18px; accent-color:var(--color-primary);
+  cursor:pointer; flex-shrink:0;
+}
+
+
+/* ═══════════════════════════════════════════
+   PRESTAÇÕES
+   ═══════════════════════════════════════════ */
+
+/* Badge de tipo */
+.tx-type-prestacao { background: #E6F1FB; color: #185FA5; }
+
+/* Item de prestação no dashboard */
+.fixed-info { display:flex; flex-direction:column; flex:1; min-width:0; }
+.prestacao-meta {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Modal — linha de início */
+.prest-start-row { display: flex; gap: 10px; }
+
+/* Preview em tempo real */
+.prest-preview {
+  background: linear-gradient(135deg, var(--rose-50) 0%, #f8f0f8 100%);
+  border: 1.5px solid var(--rose-200);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 9px;
+}
+.prest-preview-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.prest-preview-label {
+  font-size: 12px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+.prest-preview-value {
+  font-size: 14px; font-weight: 600;
+  color: var(--color-text);
+}
+.prest-preview-value.accent {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: var(--color-primary);
+}
+
+/* Lista de prestações nas Definições */
+.prest-list-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rose-50);
+}
+.prest-list-item:last-child { border-bottom: none; padding-bottom: 0; }
+.prest-list-item.finished { opacity: 0.55; }
+.prest-list-info { flex: 1; min-width: 0; }
+.prest-list-name { display:block; font-size: 14px; font-weight: 600; color: var(--color-text); margin-bottom: 2px; }
+.prest-list-meta { display:block; font-size: 12px; color: var(--color-text-muted); margin-bottom: 3px; }
+.prest-list-dates { display:flex; align-items: center; gap: 6px; font-size: 11px; color: var(--color-text-hint); }
+.prest-badge {
+  font-size: 10px; font-weight: 600; padding: 1px 7px;
+  border-radius: var(--radius-pill);
+}
+.prest-badge.active   { background: #EAF3DE; color: #3B6D11; }
+.prest-badge.finished { background: var(--color-background-secondary); color: var(--color-text-muted); }
