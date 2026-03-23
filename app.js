@@ -1,0 +1,712 @@
+// =====================================================
+//  FINANÇA ROSA — Lógica Principal
+// =====================================================
+
+const MONTH_NAMES = [
+  'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'
+];
+
+const DEFAULT_CATEGORIES = [
+  'Assinaturas','Beleza','Contas','Despesas eventuais',
+  'Eletrônicos','Lazer','Mercado','Necessidades',
+  'Presentes','Restaurante','Roupas','Saúde','Transporte','Saídas'
+];
+
+const CATEGORY_ICONS = {
+  'Assinaturas':'📱','Beleza':'💄','Contas':'🏠','Despesas eventuais':'🎲',
+  'Eletrônicos':'💻','Lazer':'🎉','Mercado':'🛒','Necessidades':'🧺',
+  'Presentes':'🎁','Restaurante':'🍽️','Roupas':'👗','Saúde':'💊',
+  'Transporte':'🚗','Saídas':'🌙','Salário':'💰','Outro':'📌',
+};
+
+const APP = {
+  uid: null,
+  user: null,
+  currentMonth: new Date().getMonth() + 1,
+  currentYear:  new Date().getFullYear(),
+  settings: { name:'', salary:0, categories:[...DEFAULT_CATEGORIES], currency:'€' }
+};
+
+
+// ═══════════════════════════════════════════════════
+//  ARRANQUE
+// ═══════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  const user = await ensureAuth();
+
+  if (user) {
+    await initApp(user);
+  } else {
+    showLoginScreen();
+  }
+
+  // Botões de login
+  document.getElementById('btn-google-login').addEventListener('click', async () => {
+    try {
+      setLoginLoading(true);
+      const user = await signInWithGoogle();
+      await initApp(user);
+    } catch (e) {
+      console.error('[Login Google]', e);
+      showToast('Erro ao entrar com Google. Tenta novamente.');
+      setLoginLoading(false);
+    }
+  });
+
+  document.getElementById('btn-anonymous-login').addEventListener('click', async () => {
+    try {
+      setLoginLoading(true);
+      const user = await signInAnonymous();
+      await initApp(user);
+    } catch (e) {
+      console.error('[Login Anónimo]', e);
+      showToast('Erro ao criar sessão. Verifica a ligação.');
+      setLoginLoading(false);
+    }
+  });
+});
+
+async function initApp(user) {
+  APP.uid  = user.uid;
+  APP.user = user;
+
+  // Carregar definições
+  const saved = await DB.getSettings(APP.uid);
+  if (saved) APP.settings = { ...APP.settings, ...saved };
+  if (!APP.settings.categories?.length) APP.settings.categories = [...DEFAULT_CATEGORIES];
+
+  setupNavigation();
+  setupMonthNav();
+  setupTypeSelector();
+  updateMonthDisplay();
+  await loadDashboard();
+
+  updateFirebaseStatus(true);
+  hideLoginScreen();
+  showApp();
+  hideLoading();
+}
+
+function hideLoading() {
+  const el = document.getElementById('loading-overlay');
+  if (el) { el.classList.add('hidden'); setTimeout(() => el.remove(), 400); }
+}
+
+function showLoginScreen() {
+  hideLoading();
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+
+function hideLoginScreen() {
+  document.getElementById('login-screen').classList.add('hidden');
+}
+
+function showApp() {
+  document.getElementById('app').classList.remove('hidden');
+}
+
+function setLoginLoading(loading) {
+  const btnG = document.getElementById('btn-google-login');
+  const btnA = document.getElementById('btn-anonymous-login');
+  btnG.disabled = loading;
+  btnA.disabled = loading;
+  btnG.style.opacity = loading ? '0.6' : '1';
+}
+
+function updateFirebaseStatus(online) {
+  const dot  = document.querySelector('.firebase-dot');
+  const text = document.getElementById('firebase-status-text');
+  if (!dot || !text) return;
+  dot.classList.toggle('online', online);
+  dot.classList.toggle('offline', !online);
+  text.textContent = online
+    ? 'Ligado ao Firebase · dados sincronizados'
+    : 'Modo offline · dados guardados localmente';
+}
+
+
+// ═══════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+
+// ═══════════════════════════════════════════════════
+//  NAVEGAÇÃO
+// ═══════════════════════════════════════════════════
+function setupNavigation() {
+  document.querySelectorAll('.nav-item').forEach(btn =>
+    btn.addEventListener('click', () => navigateTo(btn.dataset.screen))
+  );
+}
+
+function navigateTo(name) {
+  document.querySelectorAll('.nav-item').forEach(b =>
+    b.classList.toggle('active', b.dataset.screen === name));
+  document.querySelectorAll('.screen').forEach(s =>
+    s.classList.toggle('active', s.id === `screen-${name}`));
+
+  const showHeader = ['home','gastos'].includes(name);
+  document.getElementById('app-header').style.display = showHeader ? 'flex' : 'none';
+  document.getElementById('fab-add').style.display    = showHeader ? 'flex' : 'none';
+
+  switch (name) {
+    case 'home':   loadDashboard();    break;
+    case 'gastos': loadTransactions(); break;
+    case 'anual':  loadAnnual();       break;
+    case 'metas':  loadGoals();        break;
+    case 'config': loadConfig();       break;
+  }
+}
+
+
+// ═══════════════════════════════════════════════════
+//  NAVEGAÇÃO DE MÊS
+// ═══════════════════════════════════════════════════
+function setupMonthNav() {
+  document.getElementById('btn-prev-month').addEventListener('click', () => changeMonth(-1));
+  document.getElementById('btn-next-month').addEventListener('click', () => changeMonth(1));
+}
+
+function changeMonth(delta) {
+  APP.currentMonth += delta;
+  if (APP.currentMonth > 12) { APP.currentMonth = 1;  APP.currentYear++; }
+  if (APP.currentMonth < 1)  { APP.currentMonth = 12; APP.currentYear--; }
+  updateMonthDisplay();
+  const active = document.querySelector('.screen.active')?.id?.replace('screen-','');
+  if (active) navigateTo(active);
+}
+
+function updateMonthDisplay() {
+  const label = `${MONTH_NAMES[APP.currentMonth - 1]} ${APP.currentYear}`;
+  document.getElementById('header-month').textContent   = label;
+  document.getElementById('greeting-month').textContent = label;
+  document.getElementById('greeting-text').textContent  =
+    APP.settings.name ? `Olá, ${APP.settings.name} 👋` : 'Olá 👋';
+  const badge = document.getElementById('annual-year-badge');
+  if (badge) badge.textContent = APP.currentYear;
+}
+
+
+// ═══════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════
+async function loadDashboard() {
+  try {
+    const [transactions, fixedExpenses, creditCard] = await Promise.all([
+      DB.getByMonth(APP.uid, 'transactions',  APP.currentMonth, APP.currentYear),
+      DB.getByMonth(APP.uid, 'fixedExpenses', APP.currentMonth, APP.currentYear),
+      DB.getByMonth(APP.uid, 'creditCard',    APP.currentMonth, APP.currentYear),
+    ]);
+
+    const income   = transactions.filter(t => t.type === 'income').reduce((s,t) => s + (t.amount||0), 0);
+    const varExp   = transactions.filter(t => t.type !== 'income').reduce((s,t) => s + (t.amount||0), 0);
+    const fixExp   = fixedExpenses.reduce((s,t) => s + (t.amount||0), 0);
+    const credExp  = creditCard.reduce((s,t) => s + (t.amount||0), 0);
+    const totalExp = varExp + fixExp + credExp;
+    const balance  = income - totalExp;
+
+    document.getElementById('total-income').textContent   = fmt(income);
+    document.getElementById('total-expenses').textContent = fmt(totalExp);
+
+    const balEl   = document.getElementById('total-balance');
+    const badgeEl = document.getElementById('saldo-badge');
+    balEl.textContent = fmt(balance);
+    balEl.className = 'summary-value ' + (balance >= 0 ? 'positive' : 'negative');
+    if (badgeEl) {
+      badgeEl.textContent = balance >= 0 ? '✓ Positivo' : '↓ Negativo';
+      badgeEl.className   = 'saldo-badge ' + (balance >= 0 ? 'positive' : 'negative');
+    }
+
+    const allExp = [
+      ...transactions.filter(t => t.type !== 'income'),
+      ...fixedExpenses,
+      ...creditCard
+    ];
+    renderCategoryBars(allExp, totalExp);
+    renderFixedStatus(fixedExpenses);
+  } catch(e) { console.error('[loadDashboard]', e); }
+}
+
+function renderCategoryBars(expenses, total) {
+  const container = document.getElementById('category-bars');
+  if (!expenses.length) { container.innerHTML = '<p class="empty-state">Ainda sem gastos este mês.</p>'; return; }
+  const byCategory = {};
+  expenses.forEach(e => {
+    const cat = e.category || 'Outro';
+    byCategory[cat] = (byCategory[cat] || 0) + (e.amount || 0);
+  });
+  container.innerHTML = Object.entries(byCategory)
+    .sort((a,b) => b[1]-a[1])
+    .map(([cat, val]) => {
+      const pct = total > 0 ? (val/total*100) : 0;
+      return `<div class="cat-row">
+        <span class="cat-icon">${CATEGORY_ICONS[cat]||'📌'}</span>
+        <span class="cat-name">${cat}</span>
+        <div class="cat-track"><div class="cat-fill" style="width:${pct.toFixed(1)}%"></div></div>
+        <span class="cat-value">${fmt(val)}</span>
+      </div>`;
+    }).join('');
+}
+
+function renderFixedStatus(fixedExpenses) {
+  const container = document.getElementById('fixed-status');
+  if (!fixedExpenses.length) { container.innerHTML = '<p class="empty-state">Sem gastos fixos este mês.</p>'; return; }
+  container.innerHTML = fixedExpenses.map(f => `
+    <div class="fixed-item">
+      <div class="fixed-check ${f.paid?'paid':''}" onclick="toggleFixedPaid('${f.id}',${!f.paid})"></div>
+      <span class="fixed-name">${f.name||'—'}</span>
+      <span class="fixed-badge">${f.paymentType||'Débito'}</span>
+      <span class="fixed-amount">${fmt(f.amount)}</span>
+    </div>`).join('');
+}
+
+async function toggleFixedPaid(id, paid) {
+  await DB.update(APP.uid, 'fixedExpenses', id, { paid });
+  loadDashboard();
+}
+
+
+// ═══════════════════════════════════════════════════
+//  LANÇAMENTOS
+// ═══════════════════════════════════════════════════
+async function loadTransactions(filter = 'all') {
+  try {
+    const [transactions, fixedExpenses, creditCard] = await Promise.all([
+      DB.getByMonth(APP.uid, 'transactions',  APP.currentMonth, APP.currentYear),
+      DB.getByMonth(APP.uid, 'fixedExpenses', APP.currentMonth, APP.currentYear),
+      DB.getByMonth(APP.uid, 'creditCard',    APP.currentMonth, APP.currentYear),
+    ]);
+
+    let all = [
+      ...transactions.map(t  => ({ ...t,  _col: 'transactions'  })),
+      ...fixedExpenses.map(t => ({ ...t,  _col: 'fixedExpenses', type: 'fixed'  })),
+      ...creditCard.map(t    => ({ ...t,  _col: 'creditCard',    type: 'credit' })),
+    ];
+
+    if (filter === 'variable') all = all.filter(t => !['fixed','credit','income'].includes(t.type));
+    else if (filter !== 'all') all = all.filter(t => t.type === filter);
+
+    all.sort((a,b) => new Date(b.date||'1970') - new Date(a.date||'1970'));
+
+    const container = document.getElementById('transactions-list');
+    if (!all.length) { container.innerHTML = '<p class="empty-state">Sem lançamentos para este filtro.</p>'; return; }
+
+    const groups = {};
+    all.forEach(t => { const k = t.date||'Sem data'; if (!groups[k]) groups[k]=[]; groups[k].push(t); });
+
+    container.innerHTML = Object.entries(groups).map(([date, items]) =>
+      `<div class="tx-group-label">${formatDateLabel(date)}</div>${items.map(renderTxItem).join('')}`
+    ).join('');
+
+    document.querySelectorAll('.filter-tab').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadTransactions(btn.dataset.filter);
+      };
+    });
+  } catch(e) { console.error('[loadTransactions]', e); }
+}
+
+function renderTxItem(t) {
+  const icon = CATEGORY_ICONS[t.category] || '📌';
+  const isIncome = t.type === 'income';
+  const badges = { fixed:'<span class="tx-type-badge tx-type-fixed">Fixo</span>', credit:'<span class="tx-type-badge tx-type-credit">Crédito</span>', income:'<span class="tx-type-badge tx-type-income">Entrada</span>', variable:'' };
+  const installInfo = t.installments > 1 ? ` · ${t.installments}x` : '';
+  return `<div class="tx-item" onclick="confirmDelete('${t.id}','${t._col}')">
+    <div class="tx-icon">${icon}</div>
+    <div class="tx-info">
+      <div class="tx-name">${t.name||t.category||'—'}</div>
+      <div class="tx-meta">${badges[t.type]||''}${t.category||''}${installInfo}</div>
+    </div>
+    <span class="tx-amount ${isIncome?'income':'expense'}">${isIncome?'+':'−'}${fmt(t.amount)}</span>
+  </div>`;
+}
+
+async function confirmDelete(id, collection) {
+  if (!confirm('Apagar este lançamento?')) return;
+  await DB.delete(APP.uid, collection, id);
+  loadTransactions();
+  loadDashboard();
+  showToast('Lançamento apagado');
+}
+
+
+// ═══════════════════════════════════════════════════
+//  MODAL — ADICIONAR TRANSAÇÃO
+// ═══════════════════════════════════════════════════
+function openAddTransaction() {
+  populateCategorySelect('variable');
+  document.getElementById('tx-date').value = todayISO();
+  openModal('modal-add-transaction');
+}
+
+function populateCategorySelect(type) {
+  const sel  = document.getElementById('tx-category');
+  const cats = APP.settings.categories || DEFAULT_CATEGORIES;
+  sel.innerHTML = type === 'income'
+    ? `<option value="Salário">💰 Salário</option><option value="Outro">📌 Outro</option>`
+    : cats.map(c => `<option value="${c}">${CATEGORY_ICONS[c]||'📌'} ${c}</option>`).join('');
+}
+
+function setupTypeSelector() {
+  document.querySelectorAll('.type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const type = btn.dataset.type;
+      document.getElementById('installments-group').style.display  = type==='credit' ? 'flex':'none';
+      document.getElementById('payment-type-group').style.display  = type==='fixed'  ? 'flex':'none';
+      document.getElementById('category-label').textContent = type==='income' ? 'Fonte':'Categoria';
+      populateCategorySelect(type);
+    });
+  });
+}
+
+async function saveTransaction() {
+  const type     = document.querySelector('.type-btn.active')?.dataset.type || 'variable';
+  const name     = document.getElementById('tx-name').value.trim();
+  const amount   = parseFloat(document.getElementById('tx-amount').value);
+  const category = document.getElementById('tx-category').value;
+  const date     = document.getElementById('tx-date').value;
+
+  if (!name)             { showToast('Escreve um nome'); return; }
+  if (!amount||amount<=0){ showToast('Insere um valor válido'); return; }
+  if (!date)             { showToast('Seleciona uma data'); return; }
+
+  const base = { name, amount, category, date, month: APP.currentMonth, year: APP.currentYear, type };
+
+  try {
+    if (type === 'fixed') {
+      await DB.add(APP.uid, 'fixedExpenses', { ...base, paymentType: document.getElementById('tx-payment-type').value, paid: false });
+    } else if (type === 'credit') {
+      await DB.add(APP.uid, 'creditCard', { ...base, installments: parseInt(document.getElementById('tx-installments').value)||1 });
+    } else {
+      await DB.add(APP.uid, 'transactions', base);
+    }
+    closeModal();
+    await loadDashboard();
+    if (document.getElementById('screen-gastos').classList.contains('active')) loadTransactions();
+    showToast('Lançamento guardado ✓');
+  } catch(e) {
+    console.error('[saveTransaction]', e);
+    showToast('Erro ao guardar. Tenta novamente.');
+  }
+}
+
+
+// ═══════════════════════════════════════════════════
+//  PANORAMA ANUAL
+// ═══════════════════════════════════════════════════
+async function loadAnnual() {
+  document.getElementById('annual-summary').innerHTML = '<p class="empty-state" style="padding:8px 0;">A carregar…</p>';
+  try {
+    const data = await Promise.all(
+      Array.from({length:12},(_,i)=>i+1).map(async m => {
+        const [tx,fx,cc] = await Promise.all([
+          DB.getByMonth(APP.uid,'transactions', m, APP.currentYear),
+          DB.getByMonth(APP.uid,'fixedExpenses',m, APP.currentYear),
+          DB.getByMonth(APP.uid,'creditCard',   m, APP.currentYear),
+        ]);
+        const income  = tx.filter(t=>t.type==='income').reduce((s,t)=>s+(t.amount||0),0);
+        const expense = [...tx.filter(t=>t.type!=='income'),...fx,...cc].reduce((s,t)=>s+(t.amount||0),0);
+        return { month:m, income, expense, balance:income-expense };
+      })
+    );
+    renderAnnualChart(data);
+    renderAnnualSummary(data);
+  } catch(e) { console.error('[loadAnnual]', e); }
+}
+
+function renderAnnualChart(data) {
+  const canvas = document.getElementById('annual-chart');
+  if (!canvas || typeof Chart === 'undefined') return;
+  if (window._annualChart) window._annualChart.destroy();
+  window._annualChart = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: MONTH_NAMES.map(m => m.slice(0,3)),
+      datasets: [
+        { label:'Entradas', data:data.map(d=>d.income),  backgroundColor:'rgba(45,122,79,0.65)',  borderColor:'rgba(45,122,79,0.9)',  borderWidth:1, borderRadius:5, borderSkipped:false },
+        { label:'Gastos',   data:data.map(d=>d.expense), backgroundColor:'rgba(212,83,126,0.65)', borderColor:'rgba(153,53,86,0.9)',  borderWidth:1, borderRadius:5, borderSkipped:false }
+      ]
+    },
+    options: {
+      responsive:true,
+      plugins: {
+        legend: { position:'top', labels:{ font:{size:12}, padding:12 } },
+        tooltip: { callbacks:{ label: ctx => ` ${ctx.dataset.label}: ${fmt(ctx.raw)}` } }
+      },
+      scales: {
+        y: { ticks:{ callback: v=>'€'+v.toLocaleString('pt-PT'), font:{size:11} }, grid:{ color:'rgba(240,214,224,0.5)' } },
+        x: { ticks:{ font:{size:11} }, grid:{ display:false } }
+      }
+    }
+  });
+}
+
+function renderAnnualSummary(data) {
+  const totalIncome  = data.reduce((s,d)=>s+d.income,0);
+  const totalExpense = data.reduce((s,d)=>s+d.expense,0);
+  const totalBalance = totalIncome - totalExpense;
+  document.getElementById('annual-summary').innerHTML = `
+    <div class="section-card" style="margin-top:12px;">
+      <h3 class="section-title">Totais ${APP.currentYear}</h3>
+      <div class="summary-grid" style="margin-bottom:0;">
+        <div class="summary-card"><span class="summary-label">Total entradas</span><span class="summary-value positive">${fmt(totalIncome)}</span></div>
+        <div class="summary-card"><span class="summary-label">Total gastos</span><span class="summary-value negative">${fmt(totalExpense)}</span></div>
+        <div class="summary-card full-width">
+          <div><span class="summary-label">Balanço anual</span><span class="summary-value ${totalBalance>=0?'positive':'negative'}">${fmt(totalBalance)}</span></div>
+          <div class="saldo-badge ${totalBalance>=0?'positive':'negative'}">${totalBalance>=0?'✓ Positivo':'↓ Negativo'}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+
+// ═══════════════════════════════════════════════════
+//  METAS & INVESTIMENTOS
+// ═══════════════════════════════════════════════════
+async function loadGoals() {
+  document.getElementById('inv-month-label').textContent = MONTH_NAMES[APP.currentMonth-1];
+  const inv = await DB.getInvestment(APP.uid, APP.currentMonth, APP.currentYear);
+  document.getElementById('investments-form-inline').innerHTML = `
+    <div class="inv-grid">
+      <div class="form-group"><label class="form-label">Reserva (€)</label><input type="number" class="form-input" id="inv-reserve"   value="${inv.reserve||''}"        placeholder="0" inputmode="decimal"></div>
+      <div class="form-group"><label class="form-label">Renda fixa (€)</label><input type="number" class="form-input" id="inv-fixed"     value="${inv.fixedIncome||''}"    placeholder="0" inputmode="decimal"></div>
+      <div class="form-group"><label class="form-label">Renda variável (€)</label><input type="number" class="form-input" id="inv-variable"  value="${inv.variableIncome||''}" placeholder="0" inputmode="decimal"></div>
+      <div class="form-group" style="justify-content:flex-end;"><button class="btn-primary full-width" onclick="saveInvestment()">Guardar</button></div>
+    </div>
+    <div style="background:var(--rose-50);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;color:var(--color-text-muted);">
+      Total investido: <strong style="color:var(--color-text);">${fmt((inv.reserve||0)+(inv.fixedIncome||0)+(inv.variableIncome||0))}</strong>
+    </div>`;
+
+  const goals = await DB.getAll(APP.uid, 'goals');
+  const container = document.getElementById('goals-list');
+  container.innerHTML = goals.length
+    ? goals.map(renderGoalCard).join('')
+    : '<p class="empty-state">Sem metas criadas.<br>Carrega em "+ Meta" para começar.</p>';
+}
+
+function renderGoalCard(g) {
+  const total = g.total||0;
+  const saved = Object.values(g.monthlyAmounts||{}).reduce((s,v)=>s+(v||0),0);
+  const pct   = total>0 ? Math.min(100, saved/total*100) : 0;
+  return `<div class="goal-card">
+    <div class="goal-header"><span class="goal-name">🎯 ${g.name}</span><span class="goal-amounts">${fmt(saved)} / ${fmt(total)}</span></div>
+    <div class="goal-track"><div class="goal-fill" style="width:${pct.toFixed(1)}%"></div></div>
+    <div class="goal-footer"><span class="goal-pct">${pct.toFixed(0)}% concluído</span><span class="goal-date">${g.targetDate?'🗓 '+g.targetDate:''}</span></div>
+  </div>`;
+}
+
+async function saveInvestment() {
+  const data = {
+    reserve:        parseFloat(document.getElementById('inv-reserve').value)||0,
+    fixedIncome:    parseFloat(document.getElementById('inv-fixed').value)||0,
+    variableIncome: parseFloat(document.getElementById('inv-variable').value)||0,
+  };
+  await DB.saveInvestment(APP.uid, APP.currentMonth, APP.currentYear, data);
+  showToast('Investimentos guardados ✓');
+  loadGoals();
+}
+
+function openAddGoal() {
+  const name = prompt('Nome da meta (ex: Viagem a Paris):');
+  if (!name?.trim()) return;
+  const total = parseFloat(prompt('Valor total necessário (€):'));
+  if (!total||total<=0) { showToast('Valor inválido'); return; }
+  const date = prompt('Data alvo (ex: Dez 2026) — opcional:')||'';
+  DB.add(APP.uid,'goals',{ name:name.trim(), total, targetDate:date.trim(), monthlyAmounts:{} })
+    .then(() => { loadGoals(); showToast('Meta criada ✓'); });
+}
+
+
+// ═══════════════════════════════════════════════════
+//  CONFIGURAÇÕES
+// ═══════════════════════════════════════════════════
+function loadConfig() {
+  document.getElementById('config-name').value   = APP.settings.name   || '';
+  document.getElementById('config-salary').value = APP.settings.salary || '';
+  renderAccountCard();
+  renderCategoriesList();
+}
+
+function renderAccountCard() {
+  const card    = document.getElementById('account-card');
+  const user    = APP.user;
+  const isAnon  = user?.isAnonymous;
+  const name    = user?.displayName || '';
+  const email   = user?.email || '';
+  const photo   = user?.photoURL;
+
+  if (isAnon) {
+    card.innerHTML = `
+      <h3 class="section-title">Conta</h3>
+      <div class="account-anon-info">
+        <span class="account-anon-icon">👤</span>
+        <div>
+          <p style="font-size:14px;font-weight:500;color:var(--color-text);">Sessão anónima</p>
+          <p style="font-size:12px;color:var(--color-text-muted);margin-top:2px;">Os dados existem apenas neste dispositivo.</p>
+        </div>
+      </div>
+      <button class="btn-google full-width" style="margin-top:12px;" onclick="upgradeToGoogle()">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Ligar conta Google (mantém dados)
+      </button>`;
+  } else {
+    card.innerHTML = `
+      <h3 class="section-title">Conta</h3>
+      <div class="account-google-info">
+        ${photo ? `<img src="${photo}" class="account-avatar" alt="Avatar">` : `<div class="account-avatar-placeholder">${name.charAt(0)||'?'}</div>`}
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:14px;font-weight:500;color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name||'Utilizadora'}</p>
+          <p style="font-size:12px;color:var(--color-text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${email}</p>
+        </div>
+        <span class="google-badge">Google</span>
+      </div>
+      <button class="btn-outline full-width" style="margin-top:12px;color:var(--color-text-muted);font-size:13px;" onclick="handleSignOut()">Terminar sessão</button>`;
+  }
+}
+
+async function upgradeToGoogle() {
+  try {
+    showToast('A abrir login Google…');
+    const user = await signInWithGoogle();
+    APP.uid  = user.uid;
+    APP.user = user;
+    renderAccountCard();
+    showToast('Conta Google ligada ✓ Dados preservados!');
+  } catch(e) {
+    console.error('[upgradeToGoogle]', e);
+    showToast('Erro ao ligar conta Google.');
+  }
+}
+
+async function handleSignOut() {
+  if (!confirm('Tens a certeza que queres terminar sessão?')) return;
+  await signOut();
+  // Recarregar a página para voltar ao ecrã de login
+  window.location.reload();
+}
+
+async function saveSettings() {
+  APP.settings.name   = document.getElementById('config-name').value.trim();
+  APP.settings.salary = parseFloat(document.getElementById('config-salary').value)||0;
+  await DB.saveSettings(APP.uid, APP.settings);
+  updateMonthDisplay();
+  showToast('Definições guardadas ✓');
+}
+
+function renderCategoriesList() {
+  const container = document.getElementById('categories-list');
+  const cats = APP.settings.categories || DEFAULT_CATEGORIES;
+  container.innerHTML = cats.length
+    ? cats.map((c,i) => `
+        <div class="cat-config-item">
+          <span class="cat-config-name">${CATEGORY_ICONS[c]||'📌'} ${c}</span>
+          <button class="cat-config-remove" onclick="removeCategory(${i})">✕</button>
+        </div>`).join('')
+    : '<p class="empty-state" style="padding:12px 0;">Sem categorias.</p>';
+}
+
+async function removeCategory(index) {
+  if (!confirm(`Apagar a categoria "${APP.settings.categories[index]}"?`)) return;
+  APP.settings.categories.splice(index, 1);
+  await DB.saveSettings(APP.uid, APP.settings);
+  renderCategoriesList();
+}
+
+function openAddCategory() {
+  const name = prompt('Nome da nova categoria:');
+  if (!name?.trim()) return;
+  if (!APP.settings.categories) APP.settings.categories = [...DEFAULT_CATEGORIES];
+  if (APP.settings.categories.includes(name.trim())) { showToast('Categoria já existe'); return; }
+  APP.settings.categories.push(name.trim());
+  DB.saveSettings(APP.uid, APP.settings).then(() => renderCategoriesList());
+  showToast('Categoria adicionada ✓');
+}
+
+
+// ═══════════════════════════════════════════════════
+//  EXPORTAR JSON
+// ═══════════════════════════════════════════════════
+async function exportData() {
+  showToast('A preparar exportação…');
+  try {
+    const [transactions, fixedExpenses, creditCard, investments, goals] = await Promise.all([
+      DB.getAll(APP.uid,'transactions'), DB.getAll(APP.uid,'fixedExpenses'),
+      DB.getAll(APP.uid,'creditCard'),   DB.getAll(APP.uid,'investments'),
+      DB.getAll(APP.uid,'goals'),
+    ]);
+    const blob = new Blob([JSON.stringify({ exportedAt:new Date().toISOString(), transactions, fixedExpenses, creditCard, investments, goals }, null, 2)], { type:'application/json' });
+    const url  = URL.createObjectURL(blob);
+    Object.assign(document.createElement('a'), { href:url, download:`financas-backup-${todayISO()}.json` }).click();
+    URL.revokeObjectURL(url);
+    showToast('Exportado com sucesso ✓');
+  } catch(e) { showToast('Erro ao exportar'); }
+}
+
+
+// ═══════════════════════════════════════════════════
+//  IMPORTAR EXCEL
+// ═══════════════════════════════════════════════════
+async function importExcel(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  const statusEl = document.getElementById('import-status');
+  if (typeof XLSX === 'undefined') { statusEl.textContent = '⚠️ Parser Excel não carregado.'; return; }
+  statusEl.textContent = '⏳ A ler o ficheiro…';
+  try {
+    const wb = XLSX.read(await file.arrayBuffer(), { type:'array' });
+    const monthSheets = wb.SheetNames.filter(s => MONTH_NAMES.includes(s));
+    if (!monthSheets.length) { statusEl.textContent = '⚠️ Não reconheço a estrutura desta planilha.'; return; }
+    statusEl.textContent = `✓ Ficheiro válido — ${monthSheets.length} meses encontrados. (Importação completa em breve)`;
+    showToast('Ficheiro reconhecido ✓');
+  } catch(e) {
+    statusEl.textContent = '⚠️ Erro ao ler o ficheiro.';
+  }
+  input.value = '';
+}
+
+
+// ═══════════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════════
+function openModal(id) {
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open'));
+  ['tx-name','tx-amount','tx-installments'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  document.querySelectorAll('.type-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  document.getElementById('installments-group').style.display = 'none';
+  document.getElementById('payment-type-group').style.display = 'none';
+}
+
+
+// ═══════════════════════════════════════════════════
+//  UTILITÁRIOS
+// ═══════════════════════════════════════════════════
+function fmt(val) {
+  return (APP.settings.currency||'€') + (val||0).toLocaleString('pt-PT', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+
+function todayISO() { return new Date().toISOString().split('T')[0]; }
+
+function formatDateLabel(dateStr) {
+  if (!dateStr||dateStr==='Sem data') return 'Sem data';
+  try {
+    return new Date(dateStr+'T12:00:00').toLocaleDateString('pt-PT', { weekday:'long', day:'numeric', month:'long' });
+  } catch { return dateStr; }
+}
