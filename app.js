@@ -526,11 +526,19 @@ function populateCategorySelect(type) {
 function setupTypeSelector() {
   document.querySelectorAll('.type-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      const type = btn.dataset.type;
+
+      // "Crédito" redireciona para o modal de Prestação dedicado
+      if (type === 'credit') {
+        closeModal();
+        setTimeout(() => openAddPrestacao(), 180); // aguarda animação de fecho
+        return;
+      }
+
       document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      const type = btn.dataset.type;
-      document.getElementById('installments-group').style.display = type==='credit' ? 'flex':'none';
-      document.getElementById('payment-type-group').style.display = type==='fixed'  ? 'flex':'none';
+      document.getElementById('installments-group').style.display = 'none'; // já não usado
+      document.getElementById('payment-type-group').style.display = type==='fixed' ? 'flex':'none';
       document.getElementById('category-label').textContent = type==='income' ? 'Fonte':'Categoria';
       populateCategorySelect(type);
     });
@@ -559,7 +567,11 @@ async function saveTransaction() {
     if (type==='fixed') {
       await DB.add(APP.uid,'fixedExpenses',{ ...base, paymentType:document.getElementById('tx-payment-type').value, paid:false });
     } else if (type==='credit') {
-      await DB.add(APP.uid,'creditCard',{ ...base, installments:parseInt(document.getElementById('tx-installments').value)||1 });
+      // Crédito é gerido no modal de Prestações — não deve chegar aqui
+      closeModal();
+      setTimeout(() => openAddPrestacao(), 180);
+      resetSaveBtn(saveBtn);
+      return;
     } else {
       await DB.add(APP.uid,'transactions', base);
     }

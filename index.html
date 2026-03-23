@@ -230,7 +230,7 @@
     <div class="type-selector">
       <button class="type-btn active" data-type="variable">Variável</button>
       <button class="type-btn" data-type="fixed">Fixo</button>
-      <button class="type-btn" data-type="credit">Crédito</button>
+      <button class="type-btn type-btn-redirect" data-type="credit">💳 Crédito</button>
       <button class="type-btn" data-type="income">Entrada</button>
     </div>
     <div class="form-group">
@@ -249,10 +249,7 @@
       <label class="form-label">Data</label>
       <input type="date" class="form-input" id="tx-date">
     </div>
-    <div class="form-group" id="installments-group" style="display:none">
-      <label class="form-label">Número de parcelas</label>
-      <input type="number" class="form-input" id="tx-installments" placeholder="1" min="1" max="48">
-    </div>
+    <!-- Crédito redireciona para o modal de Prestações -->
     <div class="form-group" id="payment-type-group" style="display:none">
       <label class="form-label">Tipo de pagamento</label>
       <select class="form-input" id="tx-payment-type">
