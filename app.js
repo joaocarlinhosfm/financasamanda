@@ -20,6 +20,78 @@ const CATEGORY_ICONS = {
   'Transporte':'🚗','Saídas':'🌙','Salário':'💰','Outro':'📌',
 };
 
+
+// ═══════════════════════════════════════════════════
+//  SISTEMA DE DIALOGS CUSTOMIZADOS
+//  Substitui confirm() e prompt() do browser
+// ═══════════════════════════════════════════════════
+
+// Dialog de confirmação (substitui confirm())
+function showConfirm({ icon = '🗑️', title, message, confirmText = 'Confirmar', cancelText = 'Cancelar', danger = false }) {
+  return new Promise(resolve => {
+    document.getElementById('dialog-icon').textContent    = icon;
+    document.getElementById('dialog-title').textContent   = title;
+    document.getElementById('dialog-message').textContent = message;
+    document.getElementById('dialog-input').style.display = 'none';
+
+    const btnClass = danger ? 'btn-danger' : 'btn-primary';
+    document.getElementById('dialog-buttons').innerHTML = `
+      <button class="btn-outline"  onclick="closeDialog(false)">${cancelText}</button>
+      <button class="${btnClass}"  onclick="closeDialog(true)">${confirmText}</button>`;
+
+    document.getElementById('dialog-overlay').classList.add('open');
+    window._dialogResolve = resolve;
+  });
+}
+
+// Dialog de input (substitui prompt())
+function showPrompt({ icon = '✏️', title, message = '', placeholder = '', defaultValue = '', inputType = 'text' }) {
+  return new Promise(resolve => {
+    document.getElementById('dialog-icon').textContent    = icon;
+    document.getElementById('dialog-title').textContent   = title;
+    document.getElementById('dialog-message').textContent = message;
+
+    const input = document.getElementById('dialog-input');
+    input.style.display  = 'block';
+    input.type           = inputType;
+    input.placeholder    = placeholder;
+    input.value          = defaultValue;
+
+    document.getElementById('dialog-buttons').innerHTML = `
+      <button class="btn-outline" onclick="closeDialog(null)">Cancelar</button>
+      <button class="btn-primary" onclick="closeDialog(document.getElementById('dialog-input').value)">Confirmar</button>`;
+
+    document.getElementById('dialog-overlay').classList.add('open');
+    window._dialogResolve = resolve;
+    setTimeout(() => input.focus(), 100);
+
+    // Enter confirma
+    input.onkeydown = e => { if (e.key === 'Enter') closeDialog(input.value); };
+  });
+}
+
+// Dialog de alerta simples
+function showAlert({ icon = 'ℹ️', title, message }) {
+  return new Promise(resolve => {
+    document.getElementById('dialog-icon').textContent    = icon;
+    document.getElementById('dialog-title').textContent   = title;
+    document.getElementById('dialog-message').textContent = message;
+    document.getElementById('dialog-input').style.display = 'none';
+    document.getElementById('dialog-buttons').innerHTML   =
+      `<button class="dialog-btn-only" onclick="closeDialog(true)">Ok</button>`;
+    document.getElementById('dialog-overlay').classList.add('open');
+    window._dialogResolve = resolve;
+  });
+}
+
+function closeDialog(value) {
+  document.getElementById('dialog-overlay').classList.remove('open');
+  if (window._dialogResolve) {
+    window._dialogResolve(value);
+    window._dialogResolve = null;
+  }
+}
+
 const APP = {
   uid: null,
   user: null,
@@ -332,7 +404,14 @@ function renderTxItem(t) {
 }
 
 async function confirmDelete(id, collection) {
-  if (!confirm('Apagar este lançamento?')) return;
+  const ok = await showConfirm({
+    icon: '🗑️',
+    title: 'Apagar lançamento',
+    message: 'Tens a certeza? Esta ação não pode ser desfeita.',
+    confirmText: 'Apagar',
+    danger: true
+  });
+  if (!ok) return;
   await DB.delete(APP.uid, collection, id);
   loadTransactions();
   loadDashboard();
@@ -497,13 +576,48 @@ async function loadGoals() {
 }
 
 function renderGoalCard(g) {
-  const total = g.total||0;
-  const saved = Object.values(g.monthlyAmounts||{}).reduce((s,v)=>s+(v||0),0);
-  const pct   = total>0 ? Math.min(100, saved/total*100) : 0;
+  const total   = g.total || 0;
+  const amounts = g.monthlyAmounts || {};
+  const saved   = Object.values(amounts).reduce((s, v) => s + (v || 0), 0);
+  const pct     = total > 0 ? Math.min(100, saved / total * 100) : 0;
+  const remaining = Math.max(0, total - saved);
+
+  // Histórico de contribuições (meses com valor > 0)
+  const history = Object.entries(amounts)
+    .filter(([, v]) => v > 0)
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .slice(0, 4)
+    .map(([key, val]) => {
+      const [y, m] = key.split('-');
+      return `<div class="contrib-row">
+        <span class="contrib-month">${MONTH_NAMES[parseInt(m)-1]} ${y}</span>
+        <span class="contrib-val">+${fmt(val)}</span>
+      </div>`;
+    }).join('');
+
   return `<div class="goal-card">
-    <div class="goal-header"><span class="goal-name">🎯 ${g.name}</span><span class="goal-amounts">${fmt(saved)} / ${fmt(total)}</span></div>
+    <div class="goal-header">
+      <span class="goal-name">🎯 ${g.name}</span>
+      <div class="goal-actions">
+        <button class="goal-btn-edit" onclick="editGoalTarget('${g.id}','${g.name.replace(/'/g,"\\'")}',${total})" title="Editar objetivo">✏️</button>
+        <button class="goal-btn-delete" onclick="deleteGoal('${g.id}','${g.name.replace(/'/g,"\\'")}')">✕</button>
+      </div>
+    </div>
+    <div class="goal-amounts-row">
+      <span class="goal-saved">${fmt(saved)}</span>
+      <span class="goal-sep">/</span>
+      <span class="goal-target">${fmt(total)}</span>
+    </div>
     <div class="goal-track"><div class="goal-fill" style="width:${pct.toFixed(1)}%"></div></div>
-    <div class="goal-footer"><span class="goal-pct">${pct.toFixed(0)}% concluído</span><span class="goal-date">${g.targetDate?'🗓 '+g.targetDate:''}</span></div>
+    <div class="goal-footer">
+      <span class="goal-pct">${pct.toFixed(0)}% concluído</span>
+      <span class="goal-remaining">Falta: ${fmt(remaining)}</span>
+      ${g.targetDate ? `<span class="goal-date">🗓 ${g.targetDate}</span>` : ''}
+    </div>
+    ${history ? `<div class="contrib-history">${history}</div>` : ''}
+    <button class="btn-add-contrib" onclick="openAddContribution('${g.id}','${g.name.replace(/'/g,"\\'")}',${saved},${total})">
+      + Adicionar valor
+    </button>
   </div>`;
 }
 
@@ -518,14 +632,39 @@ async function saveInvestment() {
   loadGoals();
 }
 
-function openAddGoal() {
-  const name = prompt('Nome da meta (ex: Viagem a Paris):');
+async function openAddGoal() {
+  const name = await showPrompt({
+    icon: '🎯',
+    title: 'Nova meta',
+    message: 'Como se chama esta meta?',
+    placeholder: 'Ex: Viagem a Paris, Fundo de emergência…'
+  });
   if (!name?.trim()) return;
-  const total = parseFloat(prompt('Valor total necessário (€):'));
-  if (!total||total<=0) { showToast('Valor inválido'); return; }
-  const date = prompt('Data alvo (ex: Dez 2026) — opcional:')||'';
-  DB.add(APP.uid,'goals',{ name:name.trim(), total, targetDate:date.trim(), monthlyAmounts:{} })
-    .then(() => { loadGoals(); showToast('Meta criada ✓'); });
+
+  const totalStr = await showPrompt({
+    icon: '💰',
+    title: 'Valor objetivo',
+    message: `Quanto precisas para "${name.trim()}"?`,
+    placeholder: '0.00',
+    inputType: 'number'
+  });
+  const total = parseFloat(totalStr);
+  if (!total || total <= 0) { showToast('Valor inválido'); return; }
+
+  const date = await showPrompt({
+    icon: '📅',
+    title: 'Data alvo',
+    message: 'Quando queres atingir esta meta? (opcional)',
+    placeholder: 'Ex: Dez 2026'
+  });
+
+  await DB.add(APP.uid, 'goals', {
+    name: name.trim(), total,
+    targetDate: date?.trim() || '',
+    monthlyAmounts: {}
+  });
+  loadGoals();
+  showToast('Meta criada ✓');
 }
 
 
@@ -591,9 +730,15 @@ async function upgradeToGoogle() {
 }
 
 async function handleSignOut() {
-  if (!confirm('Tens a certeza que queres terminar sessão?')) return;
+  const ok = await showConfirm({
+    icon: '👋',
+    title: 'Terminar sessão',
+    message: 'Tens a certeza? Os teus dados ficam guardados na cloud.',
+    confirmText: 'Terminar sessão',
+    danger: true
+  });
+  if (!ok) return;
   await signOut();
-  // Recarregar a página para voltar ao ecrã de login
   window.location.reload();
 }
 
@@ -618,19 +763,34 @@ function renderCategoriesList() {
 }
 
 async function removeCategory(index) {
-  if (!confirm(`Apagar a categoria "${APP.settings.categories[index]}"?`)) return;
+  const ok = await showConfirm({
+    icon: '🏷️',
+    title: 'Apagar categoria',
+    message: `Apagar "${APP.settings.categories[index]}"? Os lançamentos existentes não são afetados.`,
+    confirmText: 'Apagar',
+    danger: true
+  });
+  if (!ok) return;
   APP.settings.categories.splice(index, 1);
   await DB.saveSettings(APP.uid, APP.settings);
   renderCategoriesList();
 }
 
-function openAddCategory() {
-  const name = prompt('Nome da nova categoria:');
+async function openAddCategory() {
+  const name = await showPrompt({
+    icon: '🏷️',
+    title: 'Nova categoria',
+    placeholder: 'Ex: Farmácia, Animais, Férias…'
+  });
   if (!name?.trim()) return;
   if (!APP.settings.categories) APP.settings.categories = [...DEFAULT_CATEGORIES];
-  if (APP.settings.categories.includes(name.trim())) { showToast('Categoria já existe'); return; }
+  if (APP.settings.categories.includes(name.trim())) {
+    await showAlert({ icon: '⚠️', title: 'Já existe', message: `A categoria "${name.trim()}" já existe na lista.` });
+    return;
+  }
   APP.settings.categories.push(name.trim());
-  DB.saveSettings(APP.uid, APP.settings).then(() => renderCategoriesList());
+  await DB.saveSettings(APP.uid, APP.settings);
+  renderCategoriesList();
   showToast('Categoria adicionada ✓');
 }
 
@@ -709,4 +869,71 @@ function formatDateLabel(dateStr) {
   try {
     return new Date(dateStr+'T12:00:00').toLocaleDateString('pt-PT', { weekday:'long', day:'numeric', month:'long' });
   } catch { return dateStr; }
+}
+
+
+// ═══════════════════════════════════════════════════
+//  METAS — Adicionar contribuição / Apagar
+// ═══════════════════════════════════════════════════
+
+function openAddContribution(goalId, goalName, currentTotal, goalTarget) {
+  // Guardar contexto no modal
+  document.getElementById('contrib-goal-id').value    = goalId;
+  document.getElementById('contrib-goal-name').textContent = goalName;
+  document.getElementById('contrib-current').textContent  = fmt(currentTotal);
+  document.getElementById('contrib-target').textContent   = fmt(goalTarget);
+  document.getElementById('contrib-amount').value = '';
+  document.getElementById('contrib-month-label').textContent =
+    `${MONTH_NAMES[APP.currentMonth - 1]} ${APP.currentYear}`;
+  openModal('modal-add-contribution');
+}
+
+async function saveContribution() {
+  const goalId = document.getElementById('contrib-goal-id').value;
+  const amount = parseFloat(document.getElementById('contrib-amount').value);
+
+  if (!amount || amount <= 0) { showToast('Insere um valor válido'); return; }
+
+  const key = `${APP.currentYear}-${String(APP.currentMonth).padStart(2, '0')}`;
+
+  // Buscar meta atual para somar ao valor existente neste mês
+  const snap = await db.ref(`users/${APP.uid}/goals/${goalId}/monthlyAmounts/${key}`).once('value');
+  const existing = snap.val() || 0;
+
+  await db.ref(`users/${APP.uid}/goals/${goalId}/monthlyAmounts/${key}`)
+    .set(existing + amount);
+
+  closeModal();
+  loadGoals();
+  showToast(`+${fmt(amount)} adicionado à meta ✓`);
+}
+
+async function deleteGoal(goalId, goalName) {
+  const ok = await showConfirm({
+    icon: '🎯',
+    title: 'Apagar meta',
+    message: `Apagar "${goalName}"? Todo o histórico de contribuições será perdido.`,
+    confirmText: 'Apagar meta',
+    danger: true
+  });
+  if (!ok) return;
+  await DB.delete(APP.uid, 'goals', goalId);
+  loadGoals();
+  showToast('Meta apagada');
+}
+
+async function editGoalTarget(goalId, goalName, currentTarget) {
+  const newTotalStr = await showPrompt({
+    icon: '✏️',
+    title: 'Editar objetivo',
+    message: `Novo valor total para "${goalName}":`,
+    placeholder: '0.00',
+    defaultValue: String(currentTarget),
+    inputType: 'number'
+  });
+  const newTotal = parseFloat(newTotalStr);
+  if (!newTotal || newTotal <= 0) { showToast('Valor inválido'); return; }
+  await DB.update(APP.uid, 'goals', goalId, { total: newTotal });
+  loadGoals();
+  showToast('Meta atualizada ✓');
 }
