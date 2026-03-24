@@ -375,14 +375,36 @@ async function loadTransactions(filter = 'all') {
     if (filter==='variable')   all = all.filter(t => !['fixed','prestacao','income'].includes(t.type));
     else if (filter==='credit') all = all.filter(t => t.type==='prestacao'); // credit tab shows prestacoes
     else if (filter!=='all')   all = all.filter(t => t.type===filter);
-    all.sort((a,b) => new Date(b.date||'1970') - new Date(a.date||'1970'));
+    // Fixos não têm date — ficam numa chave especial no topo
+    all.sort((a,b) => {
+      if (!a.date && !b.date) return 0;
+      if (!a.date) return -1;
+      if (!b.date) return 1;
+      return new Date(b.date) - new Date(a.date);
+    });
 
     const container = document.getElementById('transactions-list');
     if (!all.length) { container.innerHTML = '<p class="empty-state">Sem lançamentos para este filtro.</p>'; return; }
     const groups = {};
-    all.forEach(t => { const k=t.date||'Sem data'; if(!groups[k]) groups[k]=[]; groups[k].push(t); });
-    container.innerHTML = Object.entries(groups)
-      .map(([date,items]) => `<div class="tx-group-label">${formatDateLabel(date)}</div>${items.map(renderTxItem).join('')}`)
+    all.forEach(t => {
+      const k = (!t.date && t._col === 'fixedExpenses') ? '__fixed__' : (t.date || 'Sem data');
+      if (!groups[k]) groups[k] = [];
+      groups[k].push(t);
+    });
+    // Garantir que __fixed__ fica sempre no topo
+    const orderedKeys = Object.keys(groups).sort((a, b) => {
+      if (a === '__fixed__') return -1;
+      if (b === '__fixed__') return 1;
+      return new Date(b) - new Date(a);
+    });
+    const MONTH_NAMES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    container.innerHTML = orderedKeys
+      .map(key => {
+        const label = key === '__fixed__'
+          ? `Gasto do mês · ${MONTH_NAMES_PT[APP.currentMonth - 1]} ${APP.currentYear}`
+          : formatDateLabel(key);
+        return `<div class="tx-group-label">${label}</div>${groups[key].map(renderTxItem).join('')}`;
+      })
       .join('');
     document.querySelectorAll('.filter-tab').forEach(btn => {
       btn.onclick = () => {
@@ -422,7 +444,10 @@ function openTxActions(t) {
   window._currentTx = t;
   document.getElementById('tx-action-name').textContent   = t.name||t.category||'Lançamento';
   document.getElementById('tx-action-amount').textContent = `${t.type==='income'?'+':'−'}${fmt(t.amount)}`;
-  document.getElementById('tx-action-date').textContent   = formatDateLabel(t.date||'');
+  const MONTH_NAMES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('tx-action-date').textContent   = (!t.date && t._col === 'fixedExpenses')
+    ? `${MONTH_NAMES_PT[APP.currentMonth - 1]} ${APP.currentYear}`
+    : formatDateLabel(t.date||'');
   openModal('modal-tx-actions');
 }
 
@@ -436,6 +461,7 @@ function editCurrentTx() {
   document.getElementById('tx-edit-name').value      = t.name||'';
   document.getElementById('tx-edit-amount').value    = t.amount||'';
   document.getElementById('tx-edit-date').value      = t.date||todayISO();
+  document.getElementById('edit-date-group').style.display = t._col === 'fixedExpenses' ? 'none' : '';
   // Categoria
   const catSel = document.getElementById('tx-edit-category');
   const cats   = APP.settings.categories||DEFAULT_CATEGORIES;
@@ -466,9 +492,11 @@ async function saveEditTransaction() {
 
   if (!name)            { showToast('Escreve um nome'); return; }
   if (!amount||amount<=0){ showToast('Insere um valor válido'); return; }
-  if (!date)            { showToast('Seleciona uma data'); return; }
+  if (col !== 'fixedExpenses' && !date) { showToast('Seleciona uma data'); return; }
 
-  const updates = { name, amount, category:cat, date };
+  const updates = col === 'fixedExpenses'
+    ? { name, amount, category: cat }
+    : { name, amount, category: cat, date };
   if (col==='fixedExpenses') updates.paymentType = document.getElementById('tx-edit-payment-type').value;
   if (col==='creditCard')    updates.installments = parseInt(document.getElementById('tx-edit-installments').value)||1;
 
@@ -508,26 +536,16 @@ async function deleteCurrentTx() {
 function initSpeedDial() {
   const dial = document.getElementById('speed-dial');
   const fab  = document.getElementById('fab-add');
-
-  fab.addEventListener('click', e => {
-    e.stopPropagation();
-    dial.classList.toggle('open');
-  });
-
+  fab.addEventListener('click', e => { e.stopPropagation(); dial.classList.toggle('open'); });
   document.querySelectorAll('.sd-option').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       dial.classList.remove('open');
       const type = btn.dataset.type;
-      if (type === 'credit') {
-        setTimeout(() => openAddPrestacao(), 180);
-      } else {
-        setTimeout(() => openAddTransaction(type), 180);
-      }
+      if (type === 'credit') { setTimeout(() => openAddPrestacao(), 180); }
+      else { setTimeout(() => openAddTransaction(type), 180); }
     });
   });
-
-  // Fechar ao tocar fora
   document.addEventListener('click', () => dial.classList.remove('open'));
 }
 
@@ -537,13 +555,12 @@ function initSpeedDial() {
 function openAddTransaction(type = 'variable') {
   populateCategorySelect(type);
   document.getElementById('tx-date').value = todayISO();
-  // Activar o tipo correcto
-  document.querySelectorAll('.type-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.type === type);
-  });
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.toggle('active', b.dataset.type === type));
   const instGroup = document.getElementById('installments-group');
   if (instGroup) instGroup.style.display = 'none';
-  document.getElementById('payment-type-group').style.display = type === 'fixed' ? 'flex' : 'none';
+  const isFixed = type === 'fixed';
+  document.getElementById('payment-type-group').style.display = isFixed ? 'flex' : 'none';
+  document.getElementById('date-group').style.display         = isFixed ? 'none' : '';
   document.getElementById('category-label').textContent = type === 'income' ? 'Fonte' : 'Categoria';
   openModal('modal-add-transaction');
 }
@@ -572,6 +589,7 @@ function setupTypeSelector() {
       btn.classList.add('active');
       const ig = document.getElementById('installments-group'); if (ig) ig.style.display = 'none';
       document.getElementById('payment-type-group').style.display = type==='fixed' ? 'flex':'none';
+      document.getElementById('date-group').style.display         = type==='fixed' ? 'none' : '';
       document.getElementById('category-label').textContent = type==='income' ? 'Fonte':'Categoria';
       populateCategorySelect(type);
     });
@@ -593,9 +611,11 @@ async function saveTransaction() {
 
   if (!name)             { showToast('Escreve um nome'); resetSaveBtn(saveBtn); return; }
   if (!amount||amount<=0){ showToast('Insere um valor válido'); resetSaveBtn(saveBtn); return; }
-  if (!date)             { showToast('Seleciona uma data'); resetSaveBtn(saveBtn); return; }
+  if (type !== 'fixed' && !date) { showToast('Seleciona uma data'); resetSaveBtn(saveBtn); return; }
 
-  const base = { name, amount, category, date, month:APP.currentMonth, year:APP.currentYear, type };
+  const base = type === 'fixed'
+    ? { name, amount, category, month: APP.currentMonth, year: APP.currentYear, type }
+    : { name, amount, category, date, month: APP.currentMonth, year: APP.currentYear, type };
   try {
     if (type==='fixed') {
       await DB.add(APP.uid,'fixedExpenses',{ ...base, paymentType:document.getElementById('tx-payment-type').value, paid:false });
@@ -958,7 +978,7 @@ async function copyFixedFromPrevious() {
     confirmText:'Copiar', danger:false
   });
   if (!ok) return;
-  const copies = prevFixed.map(({id, createdAt, ...rest}) => ({ ...rest, month:APP.currentMonth, year:APP.currentYear, paid:false }));
+  const copies = prevFixed.map(({id, createdAt, date, ...rest}) => ({ ...rest, month:APP.currentMonth, year:APP.currentYear, paid:false }));
   await DB.importBatch(APP.uid,'fixedExpenses', copies);
   showToast(`${copies.length} fixo(s) copiado(s) ✓`);
   loadDashboard();
