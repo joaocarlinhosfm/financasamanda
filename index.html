@@ -202,10 +202,10 @@
 
   <div class="speed-dial" id="speed-dial">
     <div class="speed-dial-options">
-      <button class="sd-option" data-type="income">💰 Entrada</button>
-      <button class="sd-option" data-type="credit">💳 Prestação</button>
       <button class="sd-option" data-type="fixed">📌 Fixo</button>
       <button class="sd-option" data-type="variable">🛒 Variável</button>
+      <button class="sd-option" data-type="income">💰 Entrada</button>
+      <button class="sd-option" data-type="credit">💳 Prestação</button>
     </div>
     <button class="fab" id="fab-add">+</button>
   </div>
@@ -345,6 +345,68 @@
   <div class="modal-footer">
     <button class="btn-outline" onclick="closeModal()">Cancelar</button>
     <button class="btn-primary" onclick="saveContribution()">Guardar</button>
+  </div>
+</div>
+
+<div class="modal" id="modal-add-fixed">
+  <div class="modal-drag-bar"></div>
+  <div class="modal-header">
+    <h3 class="modal-title">📌 Gasto Fixo</h3>
+    <button class="btn-modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Nome / Descrição</label><input type="text" class="form-input" id="fixed-name" placeholder="Ex: Renda, Seguro, Ginásio…"></div>
+    <div class="form-group"><label class="form-label">Valor (€)</label><input type="number" class="form-input" id="fixed-amount" placeholder="0,00" step="0.01" min="0" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Categoria</label><select class="form-input" id="fixed-category"></select></div>
+    <div class="form-group">
+      <label class="form-label">Tipo de pagamento</label>
+      <select class="form-input" id="fixed-payment-type">
+        <option value="Débito">Débito</option>
+        <option value="Crédito">Crédito</option>
+        <option value="Transferência">Transferência</option>
+        <option value="MB Way">MB Way</option>
+      </select>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-outline" onclick="closeModal()">Cancelar</button>
+    <button class="btn-primary" id="btn-save-fixed" onclick="saveFixed()">Guardar</button>
+  </div>
+</div>
+
+<div class="modal" id="modal-add-variable">
+  <div class="modal-drag-bar"></div>
+  <div class="modal-header">
+    <h3 class="modal-title">🛒 Gasto Variável</h3>
+    <button class="btn-modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Nome / Descrição</label><input type="text" class="form-input" id="var-name" placeholder="Ex: Supermercado, Café…"></div>
+    <div class="form-group"><label class="form-label">Valor (€)</label><input type="number" class="form-input" id="var-amount" placeholder="0,00" step="0.01" min="0" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Categoria</label><select class="form-input" id="var-category"></select></div>
+    <div class="form-group"><label class="form-label">Data</label><input type="date" class="form-input" id="var-date"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-outline" onclick="closeModal()">Cancelar</button>
+    <button class="btn-primary" id="btn-save-variable" onclick="saveVariable()">Guardar</button>
+  </div>
+</div>
+
+<div class="modal" id="modal-add-income">
+  <div class="modal-drag-bar"></div>
+  <div class="modal-header">
+    <h3 class="modal-title">💰 Entrada</h3>
+    <button class="btn-modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-group"><label class="form-label">Fonte / Descrição</label><input type="text" class="form-input" id="inc-name" placeholder="Ex: Salário, Freelance…"></div>
+    <div class="form-group"><label class="form-label">Valor (€)</label><input type="number" class="form-input" id="inc-amount" placeholder="0,00" step="0.01" min="0" inputmode="decimal"></div>
+    <div class="form-group"><label class="form-label">Categoria</label><select class="form-input" id="inc-category"></select></div>
+    <div class="form-group"><label class="form-label">Data</label><input type="date" class="form-input" id="inc-date"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-outline" onclick="closeModal()">Cancelar</button>
+    <button class="btn-primary" id="btn-save-income" onclick="saveIncome()">Guardar</button>
   </div>
 </div>
 

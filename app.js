@@ -209,10 +209,10 @@ function changeMonth(delta) {
 }
 function updateMonthDisplay() {
   const label = `${MONTH_NAMES[APP.currentMonth - 1]} ${APP.currentYear}`;
-  document.getElementById('header-month').textContent   = label;
+  document.getElementById('header-month').textContent  = label;
   const nameEl = document.getElementById('greeting-name');
   if (nameEl) nameEl.textContent = APP.settings.name || 'Bem-vinda 🌸';
-  document.getElementById('greeting-text').textContent  = APP.settings.name ? `Olá, ${APP.settings.name} 👋` : 'Olá 👋';
+  document.getElementById('greeting-text').textContent = APP.settings.name ? `Olá, ${APP.settings.name} 👋` : 'Olá 👋';
 }
 
 
@@ -533,6 +533,109 @@ async function deleteCurrentTx() {
 
 
 // ═══════════════════════════════════════════════════
+//  MODAIS INDIVIDUAIS — FIXO / VARIÁVEL / ENTRADA
+// ═══════════════════════════════════════════════════
+function openAddFixed() {
+  const cats = APP.settings.categories || DEFAULT_CATEGORIES;
+  document.getElementById('fixed-category').innerHTML =
+    cats.map(c => `<option value="${c}">${CATEGORY_ICONS[c]||'📌'} ${c}</option>`).join('');
+  document.getElementById('fixed-name').value   = '';
+  document.getElementById('fixed-amount').value = '';
+  openModal('modal-add-fixed');
+}
+
+function openAddVariable() {
+  const cats = APP.settings.categories || DEFAULT_CATEGORIES;
+  document.getElementById('var-category').innerHTML =
+    cats.map(c => `<option value="${c}">${CATEGORY_ICONS[c]||'📌'} ${c}</option>`).join('');
+  document.getElementById('var-name').value   = '';
+  document.getElementById('var-amount').value = '';
+  document.getElementById('var-date').value   = todayISO();
+  openModal('modal-add-variable');
+}
+
+function openAddIncome() {
+  document.getElementById('inc-category').innerHTML =
+    `<option value="Salário">💰 Salário</option><option value="Outro">📌 Outro</option>`;
+  document.getElementById('inc-name').value   = '';
+  document.getElementById('inc-amount').value = '';
+  document.getElementById('inc-date').value   = todayISO();
+  openModal('modal-add-income');
+}
+
+async function saveFixed() {
+  const btn = document.getElementById('btn-save-fixed');
+  if (btn.disabled) return;
+  const name        = document.getElementById('fixed-name').value.trim();
+  const amount      = parseFloat(document.getElementById('fixed-amount').value);
+  const category    = document.getElementById('fixed-category').value;
+  const paymentType = document.getElementById('fixed-payment-type').value;
+  if (!name)              { showToast('⚠️ Escreve um nome'); return; }
+  if (!amount || amount<=0){ showToast('⚠️ Insere um valor válido'); return; }
+  btn.disabled = true; btn.textContent = 'A guardar…';
+  try {
+    await DB.add(APP.uid, 'fixedExpenses', {
+      name, amount, category, paymentType, paid: false,
+      month: APP.currentMonth, year: APP.currentYear, type: 'fixed'
+    });
+    closeModal();
+    await loadDashboard();
+    if (document.getElementById('screen-gastos').classList.contains('active')) loadTransactions();
+    showToast('Fixo guardado ✓');
+  } catch(e) { console.error('[saveFixed]', e); showToast('Erro ao guardar.'); }
+  finally { btn.disabled = false; btn.textContent = 'Guardar'; }
+}
+
+async function saveVariable() {
+  const btn = document.getElementById('btn-save-variable');
+  if (btn.disabled) return;
+  const name     = document.getElementById('var-name').value.trim();
+  const amount   = parseFloat(document.getElementById('var-amount').value);
+  const category = document.getElementById('var-category').value;
+  const date     = document.getElementById('var-date').value;
+  if (!name)              { showToast('⚠️ Escreve um nome'); return; }
+  if (!amount || amount<=0){ showToast('⚠️ Insere um valor válido'); return; }
+  if (!date)              { showToast('⚠️ Seleciona uma data'); return; }
+  btn.disabled = true; btn.textContent = 'A guardar…';
+  try {
+    await DB.add(APP.uid, 'transactions', {
+      name, amount, category, date,
+      month: APP.currentMonth, year: APP.currentYear, type: 'variable'
+    });
+    closeModal();
+    await loadDashboard();
+    if (document.getElementById('screen-gastos').classList.contains('active')) loadTransactions();
+    showToast('Gasto guardado ✓');
+  } catch(e) { console.error('[saveVariable]', e); showToast('Erro ao guardar.'); }
+  finally { btn.disabled = false; btn.textContent = 'Guardar'; }
+}
+
+async function saveIncome() {
+  const btn = document.getElementById('btn-save-income');
+  if (btn.disabled) return;
+  const name     = document.getElementById('inc-name').value.trim();
+  const amount   = parseFloat(document.getElementById('inc-amount').value);
+  const category = document.getElementById('inc-category').value;
+  const date     = document.getElementById('inc-date').value;
+  if (!name)              { showToast('⚠️ Escreve um nome'); return; }
+  if (!amount || amount<=0){ showToast('⚠️ Insere um valor válido'); return; }
+  if (!date)              { showToast('⚠️ Seleciona uma data'); return; }
+  btn.disabled = true; btn.textContent = 'A guardar…';
+  try {
+    await DB.add(APP.uid, 'transactions', {
+      name, amount, category, date,
+      month: APP.currentMonth, year: APP.currentYear, type: 'income'
+    });
+    closeModal();
+    await loadDashboard();
+    if (document.getElementById('screen-gastos').classList.contains('active')) loadTransactions();
+    showToast('Entrada guardada ✓');
+  } catch(e) { console.error('[saveIncome]', e); showToast('Erro ao guardar.'); }
+  finally { btn.disabled = false; btn.textContent = 'Guardar'; }
+}
+
+
+// ═══════════════════════════════════════════════════
 //  SPEED DIAL
 // ═══════════════════════════════════════════════════
 function initSpeedDial() {
@@ -544,8 +647,12 @@ function initSpeedDial() {
       e.stopPropagation();
       dial.classList.remove('open');
       const type = btn.dataset.type;
-      if (type === 'credit') { setTimeout(() => openAddPrestacao(), 180); }
-      else { setTimeout(() => openAddTransaction(type), 180); }
+      setTimeout(() => {
+        if      (type === 'fixed')    openAddFixed();
+        else if (type === 'variable') openAddVariable();
+        else if (type === 'income')   openAddIncome();
+        else if (type === 'credit')   openAddPrestacao();
+      }, 180);
     });
   });
   document.addEventListener('click', () => dial.classList.remove('open'));
@@ -1194,7 +1301,8 @@ function openModal(id) {
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'));
-  ['tx-name','tx-amount'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['tx-name','tx-amount','fixed-name','fixed-amount','var-name','var-amount','inc-name','inc-amount']
+    .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
 }
 
 
