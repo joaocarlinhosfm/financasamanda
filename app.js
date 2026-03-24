@@ -209,10 +209,17 @@ function changeMonth(delta) {
 }
 function updateMonthDisplay() {
   const label = `${MONTH_NAMES[APP.currentMonth - 1]} ${APP.currentYear}`;
-  document.getElementById('header-month').textContent  = label;
+  document.getElementById('header-month').textContent = label;
+
+  const hour = new Date().getHours();
+  let greeting;
+  if (hour >= 5 && hour < 12)       greeting = 'Bom dia ☀️';
+  else if (hour >= 12 && hour < 19) greeting = 'Boa tarde 🌤️';
+  else                               greeting = 'Boa noite 🌙';
+
+  document.getElementById('greeting-text').textContent = greeting;
   const nameEl = document.getElementById('greeting-name');
   if (nameEl) nameEl.textContent = APP.settings.name || 'Bem-vinda 🌸';
-  document.getElementById('greeting-text').textContent = APP.settings.name ? `Olá, ${APP.settings.name} 👋` : 'Olá 👋';
 }
 
 
