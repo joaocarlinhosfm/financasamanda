@@ -562,7 +562,7 @@ function _wxCategory(code) {
 function _wxWidget(category, temp, city) {
   const svgs = {
     sun: `<svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-      <g class="wx-rays-group">
+      <g style="animation:wx-spin-slow 20s linear infinite;transform-origin:50% 50%;transform-box:fill-box">
         <line x1="19" y1="2"  x2="19" y2="8"  stroke="#FFB938" stroke-width="2.5" stroke-linecap="round"/>
         <line x1="19" y1="30" x2="19" y2="36" stroke="#FFB938" stroke-width="2.5" stroke-linecap="round"/>
         <line x1="2"  y1="19" x2="8"  y2="19" stroke="#FFB938" stroke-width="2.5" stroke-linecap="round"/>
@@ -571,21 +571,20 @@ function _wxWidget(category, temp, city) {
         <line x1="27.2" y1="27.2" x2="31.5" y2="31.5" stroke="#FFB938" stroke-width="2.5" stroke-linecap="round"/>
         <line x1="31.5" y1="6.5"  x2="27.2" y2="10.8" stroke="#FFB938" stroke-width="2.5" stroke-linecap="round"/>
         <line x1="10.8" y1="27.2" x2="6.5"  y2="31.5" stroke="#FFB938" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="19" cy="19" r="7" fill="#FFB938"/>
       </g>
-      <circle cx="19" cy="19" r="7" fill="#FFB938" filter="url(#glow)"/>
-      <defs><filter id="glow"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
     </svg>`,
 
     partly: `<svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-      <g class="wx-rays-group" style="transform-origin:14px 13px; transform-box:fill-box">
+      <g style="animation:wx-spin-slow 20s linear infinite;transform-origin:50% 50%;transform-box:fill-box">
         <line x1="14" y1="2"  x2="14" y2="6"  stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
         <line x1="14" y1="20" x2="14" y2="24" stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
         <line x1="2"  y1="13" x2="6"  y2="13" stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
         <line x1="22" y1="13" x2="26" y2="13" stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
-        <line x1="5.5" y1="5.5"  x2="8.5" y2="8.5"  stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
-        <line x1="22.5" y1="4.5" x2="19.5" y2="7.5" stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
+        <line x1="5.5"  y1="5.5"  x2="8.5" y2="8.5"  stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
+        <line x1="22.5" y1="4.5"  x2="19.5" y2="7.5" stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="14" cy="13" r="5.5" fill="#FFB938"/>
       </g>
-      <circle cx="14" cy="13" r="5.5" fill="#FFB938"/>
       <g class="wx-cloud-anim">
         <rect x="7" y="24" width="24" height="10" rx="5" fill="#E0E4F0"/>
         <rect x="14" y="18" width="14" height="10" rx="5" fill="#E0E4F0"/>
