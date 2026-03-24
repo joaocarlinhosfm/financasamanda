@@ -70,7 +70,10 @@
 <div id="app" class="hidden">
   <header class="app-header" id="app-header">
     <button class="btn-month-nav" id="btn-prev-month">‹</button>
-    <span class="header-month" id="header-month">Março 2026</span>
+    <div class="header-center">
+      <span class="header-month" id="header-month">Março 2026</span>
+      <div class="header-weather" id="header-weather"></div>
+    </div>
     <button class="btn-month-nav" id="btn-next-month">›</button>
   </header>
 
@@ -169,6 +172,10 @@
           <label class="form-label">Salário mensal (€)</label>
           <input type="number" class="form-input" id="config-salary" placeholder="0,00" inputmode="decimal">
         </div>
+        <div class="form-group">
+          <label class="form-label">Cidade (para meteorologia)</label>
+          <input type="text" class="form-input" id="config-city" placeholder="Ex: Lisboa, Porto, Braga…">
+        </div>
         <button class="btn-primary full-width" onclick="saveSettings()">Guardar perfil</button>
       </div>
       <div class="section-card">
@@ -182,11 +189,6 @@
         <h3 class="section-title">Categorias</h3>
         <div id="categories-list"></div>
         <button class="btn-outline full-width" style="margin-top:10px;" onclick="openAddCategory()">+ Nova categoria</button>
-      </div>
-      <div class="section-card">
-        <h3 class="section-title">Prestações</h3>
-        <div id="all-prestacoes-list"><p class="empty-state" style="padding:8px 0;">A carregar…</p></div>
-        <button class="btn-outline full-width" style="margin-top:10px;" onclick="openAddPrestacao()">+ Nova prestação</button>
       </div>
       <div class="section-card danger-card">
         <h3 class="section-title">Exportar dados</h3>

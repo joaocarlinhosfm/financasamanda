@@ -124,7 +124,7 @@ async function initApp(user) {
     // Garantir que categorias novas (Prestações, Poupança) estão presentes
     const missing = DEFAULT_CATEGORIES.filter(c => !APP.settings.categories.includes(c));
     if (missing.length) {
-      APP.settings.categories = [...APP.settings.categories, ...missing].sort();
+      APP.settings.categories = [...APP.settings.categories, ...missing].sort((a,b) => a.localeCompare(b, 'pt'));
       await DB.saveSettings(APP.uid, APP.settings);
     }
   }
@@ -132,6 +132,7 @@ async function initApp(user) {
   updateMonthDisplay(); await loadDashboard();
   updateFirebaseStatus(true);
   hideLoginScreen(); showApp(); hideLoading();
+  loadWeather();
 }
 
 function hideLoading() {
@@ -536,6 +537,99 @@ async function deleteCurrentTx() {
   await DB.delete(APP.uid, t._col, t.id);
   await Promise.all([loadDashboard(), loadTransactions()]);
   showToast('Lançamento apagado');
+}
+
+
+// ═══════════════════════════════════════════════════
+//  METEOROLOGIA — Animada, por cidade
+// ═══════════════════════════════════════════════════
+
+// Mapear código WMO → categoria de animação
+function _wxCategory(code) {
+  if (code === 0)                          return 'sun';
+  if (code <= 2)                           return 'partly';
+  if (code === 3)                          return 'cloudy';
+  if (code <= 48)                          return 'fog';
+  if (code <= 55 || (code>=80&&code<=82))  return 'rain';
+  if (code <= 65)                          return 'rain';
+  if (code <= 77 || (code>=85&&code<=86))  return 'snow';
+  return 'storm';
+}
+
+// Gerar HTML do widget animado
+function _wxWidget(category, temp, city) {
+  const icons = {
+    sun: `<div class="wx-icon wx-sun-wrap">
+            <div class="wx-rays"></div>
+            <div class="wx-sun-core"></div>
+          </div>`,
+    partly: `<div class="wx-icon wx-partly-wrap">
+               <div class="wx-sm-rays"></div>
+               <div class="wx-sm-sun"></div>
+               <div class="wx-cloud-sm"></div>
+             </div>`,
+    cloudy: `<div class="wx-icon wx-cloudy-wrap">
+               <div class="wx-cloud-lg"></div>
+             </div>`,
+    fog: `<div class="wx-icon wx-fog-wrap">
+            <div class="wx-fog-l wx-fl1"></div>
+            <div class="wx-fog-l wx-fl2"></div>
+            <div class="wx-fog-l wx-fl3"></div>
+          </div>`,
+    rain: `<div class="wx-icon wx-rain-wrap">
+             <div class="wx-cloud-rain"></div>
+             <div class="wx-drops">
+               <div class="wx-drop wx-d1"></div>
+               <div class="wx-drop wx-d2"></div>
+               <div class="wx-drop wx-d3"></div>
+             </div>
+           </div>`,
+    snow: `<div class="wx-icon wx-snow-wrap">
+             <div class="wx-cloud-snow"></div>
+             <div class="wx-flakes">
+               <div class="wx-flake wx-f1">❄</div>
+               <div class="wx-flake wx-f2">❄</div>
+               <div class="wx-flake wx-f3">❄</div>
+             </div>
+           </div>`,
+    storm: `<div class="wx-icon wx-storm-wrap">
+              <div class="wx-cloud-dark"></div>
+              <div class="wx-bolt">⚡</div>
+              <div class="wx-drops wx-drops-sm">
+                <div class="wx-drop wx-d1"></div>
+                <div class="wx-drop wx-d2"></div>
+              </div>
+            </div>`
+  };
+  return `<div class="wx-widget">
+    ${icons[category]||icons.cloudy}
+    <div class="wx-info">
+      <span class="wx-temp">${temp}°C</span>
+      ${city ? `<span class="wx-city">${city}</span>` : ''}
+    </div>
+  </div>`;
+}
+
+async function loadWeather() {
+  const el = document.getElementById('header-weather');
+  if (!el) return;
+  const city = APP.settings.city?.trim();
+  if (!city) { el.innerHTML = ''; return; }
+
+  try {
+    // 1) Geocoding: cidade → lat/lon
+    const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=pt&format=json`;
+    const geoData = await (await fetch(geoUrl)).json();
+    if (!geoData.results?.length) { el.innerHTML = ''; return; }
+    const { latitude: lat, longitude: lon } = geoData.results[0];
+
+    // 2) Tempo atual
+    const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode&timezone=auto`;
+    const wxData = await (await fetch(wxUrl)).json();
+    const temp = Math.round(wxData.current.temperature_2m);
+    const cat  = _wxCategory(wxData.current.weathercode);
+    el.innerHTML = _wxWidget(cat, temp, city);
+  } catch(e) { el.innerHTML = ''; }
 }
 
 
@@ -988,6 +1082,7 @@ async function editGoalTarget(goalId, goalName, currentTarget) {
 function loadConfig() {
   document.getElementById('config-name').value   = APP.settings.name||'';
   document.getElementById('config-salary').value = APP.settings.salary||'';
+  document.getElementById('config-city').value   = APP.settings.city||'';
   renderAccountCard();
   renderCategoriesList();
   loadAllPrestacoes();
@@ -1045,8 +1140,10 @@ async function handleSignOut() {
 async function saveSettings() {
   APP.settings.name   = document.getElementById('config-name').value.trim();
   APP.settings.salary = parseFloat(document.getElementById('config-salary').value)||0;
+  APP.settings.city   = document.getElementById('config-city').value.trim();
   await DB.saveSettings(APP.uid, APP.settings);
   updateMonthDisplay();
+  loadWeather();
   showToast('Definições guardadas ✓');
 }
 
