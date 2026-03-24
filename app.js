@@ -128,7 +128,7 @@ async function initApp(user) {
       await DB.saveSettings(APP.uid, APP.settings);
     }
   }
-  setupNavigation(); setupMonthNav(); setupTypeSelector(); setupAnnualYearNav();
+  setupNavigation(); setupMonthNav(); setupTypeSelector(); setupAnnualYearNav(); initSpeedDial();
   updateMonthDisplay(); await loadDashboard();
   updateFirebaseStatus(true);
   hideLoginScreen(); showApp(); hideLoading();
@@ -503,16 +503,48 @@ async function deleteCurrentTx() {
 
 
 // ═══════════════════════════════════════════════════
+//  SPEED DIAL
+// ═══════════════════════════════════════════════════
+function initSpeedDial() {
+  const dial = document.getElementById('speed-dial');
+  const fab  = document.getElementById('fab-add');
+
+  fab.addEventListener('click', e => {
+    e.stopPropagation();
+    dial.classList.toggle('open');
+  });
+
+  document.querySelectorAll('.sd-option').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      dial.classList.remove('open');
+      const type = btn.dataset.type;
+      if (type === 'credit') {
+        setTimeout(() => openAddPrestacao(), 180);
+      } else {
+        setTimeout(() => openAddTransaction(type), 180);
+      }
+    });
+  });
+
+  // Fechar ao tocar fora
+  document.addEventListener('click', () => dial.classList.remove('open'));
+}
+
+// ═══════════════════════════════════════════════════
 //  MODAL — ADICIONAR LANÇAMENTO
 // ═══════════════════════════════════════════════════
-function openAddTransaction() {
-  populateCategorySelect('variable');
+function openAddTransaction(type = 'variable') {
+  populateCategorySelect(type);
   document.getElementById('tx-date').value = todayISO();
-  // Reset tipo
-  document.querySelectorAll('.type-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  // Activar o tipo correcto
+  document.querySelectorAll('.type-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.type === type);
+  });
   const instGroup = document.getElementById('installments-group');
   if (instGroup) instGroup.style.display = 'none';
-  document.getElementById('payment-type-group').style.display = 'none';
+  document.getElementById('payment-type-group').style.display = type === 'fixed' ? 'flex' : 'none';
+  document.getElementById('category-label').textContent = type === 'income' ? 'Fonte' : 'Categoria';
   openModal('modal-add-transaction');
 }
 

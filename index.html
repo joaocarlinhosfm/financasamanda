@@ -200,7 +200,15 @@
     </div>
   </main>
 
-  <button class="fab" id="fab-add" onclick="openAddTransaction()">+</button>
+  <div class="speed-dial" id="speed-dial">
+    <div class="speed-dial-options" id="speed-dial-options">
+      <button class="sd-option" data-type="income">Entrada</button>
+      <button class="sd-option" data-type="credit">Crédito</button>
+      <button class="sd-option" data-type="fixed">Fixo</button>
+      <button class="sd-option" data-type="variable">Variável</button>
+    </div>
+    <button class="fab" id="fab-add">+</button>
+  </div>
 
   <nav class="bottom-nav">
     <button class="nav-item active" data-screen="home">
