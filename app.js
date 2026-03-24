@@ -556,53 +556,87 @@ function _wxCategory(code) {
   return 'storm';
 }
 
-// Gerar HTML do widget animado
+// Gerar HTML do widget animado com SVGs
 function _wxWidget(category, temp, city) {
-  const icons = {
-    sun: `<div class="wx-icon wx-sun-wrap">
-            <div class="wx-rays"></div>
-            <div class="wx-sun-core"></div>
-          </div>`,
-    partly: `<div class="wx-icon wx-partly-wrap">
-               <div class="wx-sm-rays"></div>
-               <div class="wx-sm-sun"></div>
-               <div class="wx-cloud-sm"></div>
-             </div>`,
-    cloudy: `<div class="wx-icon wx-cloudy-wrap">
-               <div class="wx-cloud-lg"></div>
-             </div>`,
-    fog: `<div class="wx-icon wx-fog-wrap">
-            <div class="wx-fog-l wx-fl1"></div>
-            <div class="wx-fog-l wx-fl2"></div>
-            <div class="wx-fog-l wx-fl3"></div>
-          </div>`,
-    rain: `<div class="wx-icon wx-rain-wrap">
-             <div class="wx-cloud-rain"></div>
-             <div class="wx-drops">
-               <div class="wx-drop wx-d1"></div>
-               <div class="wx-drop wx-d2"></div>
-               <div class="wx-drop wx-d3"></div>
-             </div>
-           </div>`,
-    snow: `<div class="wx-icon wx-snow-wrap">
-             <div class="wx-cloud-snow"></div>
-             <div class="wx-flakes">
-               <div class="wx-flake wx-f1">❄</div>
-               <div class="wx-flake wx-f2">❄</div>
-               <div class="wx-flake wx-f3">❄</div>
-             </div>
-           </div>`,
-    storm: `<div class="wx-icon wx-storm-wrap">
-              <div class="wx-cloud-dark"></div>
-              <div class="wx-bolt">⚡</div>
-              <div class="wx-drops wx-drops-sm">
-                <div class="wx-drop wx-d1"></div>
-                <div class="wx-drop wx-d2"></div>
-              </div>
-            </div>`
+  const svgs = {
+    sun: `<svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+      <g class="wx-rays-group">
+        <line x1="19" y1="2"  x2="19" y2="8"  stroke="#FFB938" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="19" y1="30" x2="19" y2="36" stroke="#FFB938" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="2"  y1="19" x2="8"  y2="19" stroke="#FFB938" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="30" y1="19" x2="36" y2="19" stroke="#FFB938" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="6.5"  y1="6.5"  x2="10.8" y2="10.8" stroke="#FFB938" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="27.2" y1="27.2" x2="31.5" y2="31.5" stroke="#FFB938" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="31.5" y1="6.5"  x2="27.2" y2="10.8" stroke="#FFB938" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="10.8" y1="27.2" x2="6.5"  y2="31.5" stroke="#FFB938" stroke-width="2.5" stroke-linecap="round"/>
+      </g>
+      <circle cx="19" cy="19" r="7" fill="#FFB938" filter="url(#glow)"/>
+      <defs><filter id="glow"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+    </svg>`,
+
+    partly: `<svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+      <g class="wx-rays-group" style="transform-origin:14px 13px">
+        <line x1="14" y1="2"  x2="14" y2="6"  stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
+        <line x1="14" y1="20" x2="14" y2="24" stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
+        <line x1="2"  y1="13" x2="6"  y2="13" stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
+        <line x1="22" y1="13" x2="26" y2="13" stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
+        <line x1="5.5" y1="5.5"  x2="8.5" y2="8.5"  stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
+        <line x1="22.5" y1="4.5" x2="19.5" y2="7.5" stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
+      </g>
+      <circle cx="14" cy="13" r="5.5" fill="#FFB938"/>
+      <g class="wx-cloud-anim">
+        <rect x="7" y="24" width="24" height="10" rx="5" fill="#E0E4F0"/>
+        <rect x="14" y="18" width="14" height="10" rx="5" fill="#E0E4F0"/>
+      </g>
+    </svg>`,
+
+    cloudy: `<svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+      <g class="wx-cloud-anim">
+        <rect x="4"  y="22" width="30" height="12" rx="6" fill="#D0D5E8"/>
+        <rect x="10" y="14" width="18" height="12" rx="6" fill="#D0D5E8"/>
+        <rect x="6"  y="16" width="14" height="10" rx="5" fill="#DDE0F0"/>
+      </g>
+    </svg>`,
+
+    fog: `<svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+      <rect class="wx-fog1" x="4" y="10" width="30" height="3.5" rx="1.75" fill="#B0B8D0"/>
+      <rect class="wx-fog2" x="8" y="18" width="22" height="3.5" rx="1.75" fill="#B0B8D0"/>
+      <rect class="wx-fog3" x="6" y="26" width="26" height="3.5" rx="1.75" fill="#B0B8D0"/>
+    </svg>`,
+
+    rain: `<svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+      <g class="wx-cloud-anim">
+        <rect x="5"  y="6"  width="28" height="12" rx="6" fill="#C8CCE0"/>
+        <rect x="10" y="2"  width="16" height="10" rx="5" fill="#D0D4E8"/>
+      </g>
+      <line class="wx-r1" x1="12" y1="22" x2="10" y2="30" stroke="#6FA8D0" stroke-width="2.5" stroke-linecap="round"/>
+      <line class="wx-r2" x1="19" y1="22" x2="17" y2="30" stroke="#6FA8D0" stroke-width="2.5" stroke-linecap="round"/>
+      <line class="wx-r3" x1="26" y1="22" x2="24" y2="30" stroke="#6FA8D0" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`,
+
+    snow: `<svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+      <g class="wx-cloud-anim">
+        <rect x="5"  y="6"  width="28" height="12" rx="6" fill="#D0D4E8"/>
+        <rect x="10" y="2"  width="16" height="10" rx="5" fill="#DDE0F0"/>
+      </g>
+      <circle class="wx-s1" cx="12" cy="28" r="2.5" fill="#8CB4D4"/>
+      <circle class="wx-s2" cx="19" cy="28" r="2.5" fill="#8CB4D4"/>
+      <circle class="wx-s3" cx="26" cy="28" r="2.5" fill="#8CB4D4"/>
+    </svg>`,
+
+    storm: `<svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+      <g class="wx-cloud-anim">
+        <rect x="4"  y="4"  width="30" height="13" rx="6.5" fill="#8090A8"/>
+        <rect x="9"  y="1"  width="18" height="11" rx="5.5" fill="#9098B8"/>
+      </g>
+      <line class="wx-r1" x1="11" y1="20" x2="9"  y2="27" stroke="#6FA8D0" stroke-width="2" stroke-linecap="round"/>
+      <line class="wx-r2" x1="27" y1="20" x2="25" y2="27" stroke="#6FA8D0" stroke-width="2" stroke-linecap="round"/>
+      <path class="wx-bolt-anim" d="M22 17 L16 26 L20 26 L14 36 L24 24 L19 24 Z" fill="#FFD84D"/>
+    </svg>`
   };
+
   return `<div class="wx-widget">
-    ${icons[category]||icons.cloudy}
+    <div class="wx-icon">${svgs[category] || svgs.cloudy}</div>
     <div class="wx-info">
       <span class="wx-temp">${temp}°C</span>
       ${city ? `<span class="wx-city">${city}</span>` : ''}

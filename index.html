@@ -70,18 +70,18 @@
 <div id="app" class="hidden">
   <header class="app-header" id="app-header">
     <button class="btn-month-nav" id="btn-prev-month">‹</button>
-    <div class="header-center">
-      <span class="header-month" id="header-month">Março 2026</span>
-      <div class="header-weather" id="header-weather"></div>
-    </div>
+    <span class="header-month" id="header-month">Março 2026</span>
     <button class="btn-month-nav" id="btn-next-month">›</button>
   </header>
 
   <main class="app-main">
     <div class="screen active" id="screen-home">
       <div class="greeting-card">
-        <p class="greeting-hello" id="greeting-text">Olá 👋</p>
-        <h1 class="greeting-month" id="greeting-name">—</h1>
+        <div class="greeting-left">
+          <p class="greeting-hello" id="greeting-text">Olá 👋</p>
+          <h1 class="greeting-month" id="greeting-name">—</h1>
+        </div>
+        <div class="greeting-weather" id="header-weather"></div>
       </div>
       <div class="summary-grid">
         <div class="summary-card">
