@@ -179,7 +179,7 @@ html, body {
 
 /* ── SUN ── */
 @keyframes wx-spin-slow { to { transform: rotate(360deg); } }
-.wx-rays-group { animation: wx-spin-slow 20s linear infinite; transform-origin: 12px 12px; }
+.wx-rays-group { animation: wx-spin-slow 20s linear infinite; transform-origin: 19px 19px; transform-box: fill-box; }
 
 /* ── CLOUD BOB ── */
 @keyframes wx-bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }

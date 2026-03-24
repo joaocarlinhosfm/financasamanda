@@ -9,8 +9,8 @@ const MONTH_NAMES = [
 const DEFAULT_CATEGORIES = [
   'Assinaturas','Beleza','Contas','Despesas eventuais','Eletrônicos',
   'Lazer','Mercado','Necessidades','Presentes','Prestações','Restaurante',
-  'Roupas','Saúde','Transporte','Saídas'
-];
+  'Roupas','Saídas','Saúde','Transporte'
+].sort((a,b) => a.localeCompare(b,'pt'));
 const CATEGORY_ICONS = {
   'Assinaturas':'📱','Beleza':'💄','Contas':'🏠','Despesas eventuais':'🎲',
   'Eletrônicos':'💻','Lazer':'🎉','Mercado':'🛒','Necessidades':'🧺',
@@ -124,9 +124,11 @@ async function initApp(user) {
     // Garantir que categorias novas (Prestações, Poupança) estão presentes
     const missing = DEFAULT_CATEGORIES.filter(c => !APP.settings.categories.includes(c));
     if (missing.length) {
-      APP.settings.categories = [...APP.settings.categories, ...missing].sort((a,b) => a.localeCompare(b, 'pt'));
+      APP.settings.categories = [...APP.settings.categories, ...missing];
       await DB.saveSettings(APP.uid, APP.settings);
     }
+    // Ordenar sempre por locale pt
+    APP.settings.categories.sort((a,b) => a.localeCompare(b,'pt'));
   }
   setupNavigation(); setupMonthNav(); setupTypeSelector(); setupAnnualYearNav(); initSpeedDial();
   updateMonthDisplay(); await loadDashboard();
@@ -575,7 +577,7 @@ function _wxWidget(category, temp, city) {
     </svg>`,
 
     partly: `<svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-      <g class="wx-rays-group" style="transform-origin:14px 13px">
+      <g class="wx-rays-group" style="transform-origin:14px 13px; transform-box:fill-box">
         <line x1="14" y1="2"  x2="14" y2="6"  stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
         <line x1="14" y1="20" x2="14" y2="24" stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
         <line x1="2"  y1="13" x2="6"  y2="13" stroke="#FFB938" stroke-width="2" stroke-linecap="round"/>
@@ -1175,6 +1177,7 @@ async function saveSettings() {
   APP.settings.name   = document.getElementById('config-name').value.trim();
   APP.settings.salary = parseFloat(document.getElementById('config-salary').value)||0;
   APP.settings.city   = document.getElementById('config-city').value.trim();
+  APP.settings.categories?.sort((a,b) => a.localeCompare(b,'pt'));
   await DB.saveSettings(APP.uid, APP.settings);
   updateMonthDisplay();
   loadWeather();
@@ -1208,6 +1211,7 @@ async function openAddCategory() {
     await showAlert({ icon:'⚠️', title:'Já existe', message:`A categoria "${name.trim()}" já existe na lista.` }); return;
   }
   APP.settings.categories.push(name.trim());
+  APP.settings.categories.sort((a,b) => a.localeCompare(b,'pt'));
   await DB.saveSettings(APP.uid, APP.settings);
   renderCategoriesList(); showToast('Categoria adicionada ✓');
 }
