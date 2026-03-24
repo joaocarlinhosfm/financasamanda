@@ -78,7 +78,7 @@
     <div class="screen active" id="screen-home">
       <div class="greeting-card">
         <p class="greeting-hello" id="greeting-text">Olá 👋</p>
-        <h1 class="greeting-month" id="greeting-month">Março 2026</h1>
+        <h1 class="greeting-month" id="greeting-name">—</h1>
       </div>
       <div class="summary-grid">
         <div class="summary-card">
@@ -200,7 +200,15 @@
     </div>
   </main>
 
-  <button class="fab" id="fab-add" onclick="openAddTransaction()">+</button>
+  <div class="speed-dial" id="speed-dial">
+    <div class="speed-dial-options">
+      <button class="sd-option" data-type="income">💰 Entrada</button>
+      <button class="sd-option" data-type="credit">💳 Prestação</button>
+      <button class="sd-option" data-type="fixed">📌 Fixo</button>
+      <button class="sd-option" data-type="variable">🛒 Variável</button>
+    </div>
+    <button class="fab" id="fab-add">+</button>
+  </div>
 
   <nav class="bottom-nav">
     <button class="nav-item active" data-screen="home">

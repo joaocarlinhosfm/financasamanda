@@ -180,7 +180,8 @@ function navigateTo(name) {
   // Header de mês só em Início e Gastos
   const showMonthHeader = ['home','gastos'].includes(name);
   document.getElementById('app-header').style.display = showMonthHeader ? 'flex' : 'none';
-  document.getElementById('fab-add').style.display    = showMonthHeader ? 'flex' : 'none';
+  const sdEl = document.getElementById('speed-dial');
+  if (sdEl) sdEl.style.display = showMonthHeader ? 'flex' : 'none';
   switch(name) {
     case 'home':   loadDashboard();    break;
     case 'gastos': loadTransactions(); break;
@@ -209,7 +210,8 @@ function changeMonth(delta) {
 function updateMonthDisplay() {
   const label = `${MONTH_NAMES[APP.currentMonth - 1]} ${APP.currentYear}`;
   document.getElementById('header-month').textContent   = label;
-  document.getElementById('greeting-month').textContent = label;
+  const nameEl = document.getElementById('greeting-name');
+  if (nameEl) nameEl.textContent = APP.settings.name || 'Bem-vinda 🌸';
   document.getElementById('greeting-text').textContent  = APP.settings.name ? `Olá, ${APP.settings.name} 👋` : 'Olá 👋';
 }
 
