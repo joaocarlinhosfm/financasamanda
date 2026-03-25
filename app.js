@@ -141,9 +141,10 @@ async function initApp(user) {
   }
   setupNavigation(); setupMonthNav(); setupTypeSelector(); setupAnnualYearNav(); initSpeedDial();
   updateMonthDisplay(); await loadDashboard();
-  updateFirebaseStatus(true);
+  updateFirebaseStatus(navigator.onLine);
   hideLoginScreen(); showApp(); hideLoading();
   loadWeather();
+  flushOfflineQueue();
 }
 
 function hideLoading() {
@@ -726,7 +727,7 @@ async function saveFixed() {
     closeModal();
     await loadDashboard();
     if (document.getElementById('screen-gastos').classList.contains('active')) loadTransactions();
-    showToast('Fixo guardado ✓');
+    showToast(navigator.onLine ? 'Fixo guardado ✓' : '📶 Guardado offline · será sincronizado');
   } catch(e) { console.error('[saveFixed]', e); showToast('Erro ao guardar.'); }
   finally { btn.disabled = false; btn.textContent = 'Guardar'; }
 }
@@ -750,7 +751,7 @@ async function saveVariable() {
     closeModal();
     await loadDashboard();
     if (document.getElementById('screen-gastos').classList.contains('active')) loadTransactions();
-    showToast('Gasto guardado ✓');
+    showToast(navigator.onLine ? 'Gasto guardado ✓' : '📶 Guardado offline · será sincronizado');
   } catch(e) { console.error('[saveVariable]', e); showToast('Erro ao guardar.'); }
   finally { btn.disabled = false; btn.textContent = 'Guardar'; }
 }
@@ -774,7 +775,7 @@ async function saveIncome() {
     closeModal();
     await loadDashboard();
     if (document.getElementById('screen-gastos').classList.contains('active')) loadTransactions();
-    showToast('Entrada guardada ✓');
+    showToast(navigator.onLine ? 'Entrada guardada ✓' : '📶 Guardado offline · será sincronizado');
   } catch(e) { console.error('[saveIncome]', e); showToast('Erro ao guardar.'); }
   finally { btn.disabled = false; btn.textContent = 'Guardar'; }
 }
@@ -885,7 +886,7 @@ async function saveTransaction() {
     closeModal();
     await loadDashboard();
     if (document.getElementById('screen-gastos').classList.contains('active')) loadTransactions();
-    showToast('Lançamento guardado ✓');
+    showToast(navigator.onLine ? 'Lançamento guardado ✓' : '📶 Guardado offline · será sincronizado');
   } catch(e) {
     console.error('[saveTransaction]', e);
     showToast('Erro ao guardar. Tenta novamente.');
