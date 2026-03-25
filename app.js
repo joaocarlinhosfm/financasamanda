@@ -17,12 +17,12 @@ const MONTH_NAMES = [
 ];
 const DEFAULT_CATEGORIES = [
   'Assinaturas','Beleza','Contas','Despesas eventuais','Eletrônicos',
-  'Lazer','Mercado','Necessidades','Presentes','Prestações','Restaurante',
+  'Investimentos','Lazer','Mercado','Necessidades','Presentes','Prestações','Restaurante',
   'Roupas','Saídas','Saúde','Transporte'
 ].sort((a,b) => a.localeCompare(b,'pt'));
 const CATEGORY_ICONS = {
   'Assinaturas':'📱','Beleza':'💄','Contas':'🏠','Despesas eventuais':'🎲',
-  'Eletrônicos':'💻','Lazer':'🎉','Mercado':'🛒','Necessidades':'🧺',
+  'Eletrônicos':'💻','Investimentos':'📈','Lazer':'🎉','Mercado':'🛒','Necessidades':'🧺',
   'Presentes':'🎁','Prestações':'💳','Restaurante':'🍽️','Roupas':'👗',
   'Saúde':'💊','Transporte':'🚗','Saídas':'🌙','Poupança':'🐷',
   'Salário':'💰','Outro':'📌',
@@ -225,7 +225,7 @@ function navigateTo(name) {
   const showMonthHeader = ['home','gastos'].includes(name);
   document.getElementById('app-header').style.display = showMonthHeader ? 'flex' : 'none';
   const sdEl = document.getElementById('speed-dial');
-  if (sdEl) sdEl.style.display = showMonthHeader ? 'flex' : 'none';
+  if (sdEl) sdEl.style.display = ['home','gastos','metas'].includes(name) ? 'flex' : 'none';
   switch(name) {
     case 'home':   loadDashboard();    break;
     case 'gastos': loadTransactions(); break;
@@ -815,23 +815,50 @@ async function saveIncome() {
 // ═══════════════════════════════════════════════════
 //  SPEED DIAL
 // ═══════════════════════════════════════════════════
+function _updateSpeedDialOptions() {
+  const activeScreen = document.querySelector('.screen.active')?.id?.replace('screen-', '');
+  const container    = document.querySelector('.speed-dial-options');
+  if (!container) return;
+  if (activeScreen === 'metas') {
+    container.innerHTML = `
+      <button class="sd-option" data-type="goal">🎯 Meta</button>
+      <button class="sd-option" data-type="investment">📈 Investimento</button>`;
+  } else {
+    container.innerHTML = `
+      <button class="sd-option" data-type="fixed">📌 Fixo</button>
+      <button class="sd-option" data-type="variable">🛒 Variável</button>
+      <button class="sd-option" data-type="income">💰 Entrada</button>
+      <button class="sd-option" data-type="credit">💳 Prestação</button>`;
+  }
+}
+
 function initSpeedDial() {
   const dial = document.getElementById('speed-dial');
   const fab  = document.getElementById('fab-add');
-  fab.addEventListener('click', e => { e.stopPropagation(); dial.classList.toggle('open'); });
-  document.querySelectorAll('.sd-option').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      dial.classList.remove('open');
-      const type = btn.dataset.type;
-      setTimeout(() => {
-        if      (type === 'fixed')    openAddFixed();
-        else if (type === 'variable') openAddVariable();
-        else if (type === 'income')   openAddIncome();
-        else if (type === 'credit')   openAddPrestacao();
-      }, 180);
-    });
+
+  fab.addEventListener('click', e => {
+    e.stopPropagation();
+    _updateSpeedDialOptions();
+    dial.classList.toggle('open');
   });
+
+  // Event delegation — funciona com innerHTML dinâmico
+  document.querySelector('.speed-dial-options').addEventListener('click', e => {
+    const btn = e.target.closest('.sd-option');
+    if (!btn) return;
+    e.stopPropagation();
+    dial.classList.remove('open');
+    const type = btn.dataset.type;
+    setTimeout(() => {
+      if      (type === 'fixed')      openAddFixed();
+      else if (type === 'variable')   openAddVariable();
+      else if (type === 'income')     openAddIncome();
+      else if (type === 'credit')     openAddPrestacao();
+      else if (type === 'goal')       openAddGoal();
+      else if (type === 'investment') openAddInvestment();
+    }, 180);
+  });
+
   document.addEventListener('click', () => dial.classList.remove('open'));
 }
 
@@ -1046,76 +1073,155 @@ function renderAnnualSummary(data, allYearExpenses = []) {
 //  METAS & INVESTIMENTOS
 // ═══════════════════════════════════════════════════
 async function loadGoals() {
-  document.getElementById('inv-month-label').textContent = MONTH_NAMES[APP.currentMonth-1];
-  const inv = await DB.getInvestment(APP.uid, APP.currentMonth, APP.currentYear);
-  document.getElementById('investments-form-inline').innerHTML = `
-    <div class="inv-grid">
-      <div class="form-group"><label class="form-label">Reserva (€)</label><input type="number" class="form-input" id="inv-reserve"   value="${inv.reserve||''}"        placeholder="0" inputmode="decimal"></div>
-      <div class="form-group"><label class="form-label">Renda fixa (€)</label><input type="number" class="form-input" id="inv-fixed"     value="${inv.fixedIncome||''}"    placeholder="0" inputmode="decimal"></div>
-      <div class="form-group"><label class="form-label">Renda variável (€)</label><input type="number" class="form-input" id="inv-variable"  value="${inv.variableIncome||''}" placeholder="0" inputmode="decimal"></div>
-      <div class="form-group" style="justify-content:flex-end;"><button class="btn-primary full-width" onclick="saveInvestment()">Guardar</button></div>
-    </div>
-    <div style="background:var(--rose-50);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;color:var(--color-text-muted);">
-      Total investido: <strong style="color:var(--color-text);">${fmt((inv.reserve||0)+(inv.fixedIncome||0)+(inv.variableIncome||0))}</strong>
-    </div>`;
-
-  const goals = await DB.getAll(APP.uid,'goals');
+  // ── Portfolio de investimentos ──
+  const portfolio    = await DB.getAll(APP.uid, 'portfolio');
+  const invContainer = document.getElementById('investments-list');
+  if (invContainer) {
+    invContainer.innerHTML = portfolio.length
+      ? portfolio.map(renderInvestmentCard).join('')
+      : '<p class="empty-state">Sem investimentos.<br>Carrega em + para adicionar.</p>';
+  }
+  // ── Metas ──
+  const goals     = await DB.getAll(APP.uid, 'goals');
   const container = document.getElementById('goals-list');
   container.innerHTML = goals.length
     ? goals.map(renderGoalCard).join('')
-    : '<p class="empty-state">Sem metas criadas.<br>Carrega em "+ Meta" para começar.</p>';
+    : '<p class="empty-state">Sem metas criadas.<br>Carrega em + para começar.</p>';
 }
 
-function renderGoalCard(g) {
-  const total    = g.total||0;
-  const amounts  = g.monthlyAmounts||{};
-  const saved    = Object.values(amounts).reduce((s,v)=>s+(v||0),0);
-  const pct      = total>0 ? Math.min(100,saved/total*100) : 0;
-  const remaining = Math.max(0, total-saved);
-  const history  = Object.entries(amounts)
-    .filter(([,v])=>v>0).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,4)
-    .map(([key,val])=>{
-      const [y,m] = key.split('-');
-      return `<div class="contrib-row"><span class="contrib-month">${MONTH_NAMES[parseInt(m)-1]} ${y}</span><span class="contrib-val">+${fmt(val)}</span></div>`;
-    }).join('');
-
-  const safeName = g.name.replace(/'/g,"\\'");
-  return `<div class="goal-card">
-    <div class="goal-header">
-      <span class="goal-name">🎯 ${g.name}</span>
-      <div class="goal-actions">
-        <button class="goal-btn-edit"   onclick="editGoalTarget('${g.id}','${safeName}',${total})" title="Editar objetivo">✏️</button>
-        <button class="goal-btn-delete" onclick="deleteGoal('${g.id}','${safeName}')">✕</button>
-      </div>
+function renderInvestmentCard(p) {
+  const safeName = (p.name || '').replace(/'/g, "\'");
+  const entries  = p.entries
+    ? Object.entries(p.entries)
+        .sort((a, b) => (b[1].date || '').localeCompare(a[1].date || ''))
+        .slice(0, 3)
+    : [];
+  const historyHTML = entries.length
+    ? `<div class="inv-card-history">${entries.map(([, e]) =>
+        `<div class="inv-history-row">
+          <span class="inv-history-date">${formatDateLabel(e.date)}</span>
+          <span class="inv-history-val">+${fmt(e.amount)}</span>
+        </div>`).join('')}</div>`
+    : '';
+  return `<div class="investment-card">
+    <div class="inv-card-header">
+      <span class="inv-card-name">📈 ${p.name || '—'}</span>
+      <button class="goal-btn-delete" onclick="deleteInvestment('${p.id}','${safeName}')">✕</button>
     </div>
-    <div class="goal-amounts-row">
-      <span class="goal-saved">${fmt(saved)}</span>
-      <span class="goal-sep">/</span>
-      <span class="goal-target">${fmt(total)}</span>
-    </div>
-    <div class="goal-track"><div class="goal-fill" style="width:${pct.toFixed(1)}%"></div></div>
-    <div class="goal-footer">
-      <span class="goal-pct">${pct.toFixed(0)}% concluído</span>
-      <span class="goal-remaining">Falta: ${fmt(remaining)}</span>
-      ${g.targetDate?`<span class="goal-date">🗓 ${g.targetDate}</span>`:''}
-    </div>
-    ${history?`<div class="contrib-history">${history}</div>`:''}
-    <button class="btn-add-contrib" onclick="openAddContribution('${g.id}','${safeName}',${saved},${total})">
-      + Adicionar valor
+    <div class="inv-card-total">${fmt(p.totalInvested || 0)}</div>
+    <div class="inv-card-label">Total investido</div>
+    ${historyHTML}
+    <button class="btn-add-contrib" onclick="openAddCapital('${p.id}','${safeName}',${p.totalInvested || 0})">
+      + Adicionar capital
     </button>
   </div>`;
 }
 
-async function saveInvestment() {
-  const data = {
-    reserve:        parseFloat(document.getElementById('inv-reserve').value)||0,
-    fixedIncome:    parseFloat(document.getElementById('inv-fixed').value)||0,
-    variableIncome: parseFloat(document.getElementById('inv-variable').value)||0,
-  };
-  await DB.saveInvestment(APP.uid, APP.currentMonth, APP.currentYear, data);
-  showToast('Investimentos guardados ✓');
-  loadGoals();
+
+// ═══════════════════════════════════════════════════
+//  INVESTIMENTOS — Portfolio
+// ═══════════════════════════════════════════════════
+
+// Abrir modal para criar novo investimento
+function openAddInvestment() {
+  document.getElementById('inv-modal-title').textContent = '📈 Novo Investimento';
+  document.getElementById('inv-id').value     = '';
+  document.getElementById('inv-name').value   = '';
+  document.getElementById('inv-amount').value = '';
+  document.getElementById('inv-date').value   = todayISO();
+  const nameGroup = document.getElementById('inv-name').closest('.form-group');
+  if (nameGroup) nameGroup.style.display = '';
+  document.getElementById('inv-expense-note').style.display = '';
+  openModal('modal-add-investment');
 }
+
+// Abrir modal para adicionar capital a investimento existente
+function openAddCapital(portfolioId, portfolioName, currentTotal) {
+  document.getElementById('inv-modal-title').textContent = `📈 ${portfolioName}`;
+  document.getElementById('inv-id').value     = portfolioId;
+  document.getElementById('inv-name').value   = portfolioName;
+  document.getElementById('inv-amount').value = '';
+  document.getElementById('inv-date').value   = todayISO();
+  // Esconder campo de nome (já existe o investimento)
+  const nameGroup = document.getElementById('inv-name').closest('.form-group');
+  if (nameGroup) nameGroup.style.display = 'none';
+  document.getElementById('inv-expense-note').style.display = '';
+  openModal('modal-add-investment');
+}
+
+async function saveInvestmentEntry() {
+  const btn = document.getElementById('btn-save-investment');
+  if (btn.disabled) return;
+
+  const portfolioId = document.getElementById('inv-id').value;
+  const isNew       = !portfolioId;
+  const name        = document.getElementById('inv-name').value.trim();
+  const amount      = parseFloat(document.getElementById('inv-amount').value);
+  const date        = document.getElementById('inv-date').value;
+
+  if (isNew && !name)         { showToast('⚠️ Escreve um nome'); return; }
+  if (!amount || amount <= 0) { showToast('⚠️ Insere um valor válido'); return; }
+  if (!date)                  { showToast('⚠️ Seleciona uma data'); return; }
+
+  btn.disabled = true; btn.textContent = 'A guardar…';
+
+  try {
+    const entryKey = Date.now().toString();
+    const entry    = { amount, date, createdAt: Date.now() };
+
+    if (isNew) {
+      // Criar novo investimento no portfolio
+      await DB.add(APP.uid, 'portfolio', {
+        name,
+        totalInvested: amount,
+        entries: { [entryKey]: entry }
+      });
+    } else {
+      // Adicionar capital a investimento existente
+      const all     = await DB.getAll(APP.uid, 'portfolio');
+      const current = all.find(p => p.id === portfolioId);
+      const newTotal = (current?.totalInvested || 0) + amount;
+      const newEntries = { ...(current?.entries || {}), [entryKey]: entry };
+      await DB.update(APP.uid, 'portfolio', portfolioId, {
+        totalInvested: newTotal,
+        entries: newEntries
+      });
+    }
+
+    // Registar sempre como gasto na categoria Investimentos
+    await DB.add(APP.uid, 'transactions', {
+      name: `Investimento: ${isNew ? name : document.getElementById('inv-name').value}`,
+      amount,
+      category: 'Investimentos',
+      date,
+      month: APP.currentMonth,
+      year:  APP.currentYear,
+      type:  'variable'
+    });
+
+    closeModal();
+    await Promise.all([loadGoals(), loadDashboard()]);
+    showToast(navigator.onLine ? `📈 ${fmt(amount)} investido ✓` : '📶 Guardado offline · será sincronizado');
+  } catch (e) {
+    console.error('[saveInvestmentEntry]', e);
+    showToast('Erro ao guardar.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar';
+  }
+}
+
+async function deleteInvestment(portfolioId, portfolioName) {
+  const ok = await showConfirm({
+    icon: '📈', title: 'Apagar investimento',
+    message: `Apagar "${portfolioName}"? O histórico de entradas será perdido.`,
+    confirmText: 'Apagar', danger: true
+  });
+  if (!ok) return;
+  await DB.delete(APP.uid, 'portfolio', portfolioId);
+  loadGoals();
+  showToast('Investimento apagado');
+}
+
 
 async function openAddGoal() {
   const name = await showPrompt({ icon:'🎯', title:'Nova meta', message:'Como se chama esta meta?', placeholder:'Ex: Viagem a Paris, Fundo de emergência…' });

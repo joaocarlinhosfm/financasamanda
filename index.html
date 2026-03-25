@@ -148,11 +148,10 @@
     <div class="screen" id="screen-metas">
       <div class="screen-header-inner">
         <h2 class="screen-title-inner">Metas & Poupanças</h2>
-        <button class="btn-primary small" onclick="openAddGoal()">+ Meta</button>
       </div>
       <div class="section-card">
-        <h3 class="section-title">Investimentos — <span id="inv-month-label">Março</span></h3>
-        <div id="investments-form-inline"></div>
+        <h3 class="section-title">Investimentos</h3>
+        <div id="investments-list"><p class="empty-state">Sem investimentos criados.</p></div>
       </div>
       <div id="goals-list"><p class="empty-state">Sem metas criadas.</p></div>
     </div>
@@ -447,6 +446,36 @@
   <div class="modal-footer">
     <button class="btn-outline" onclick="closeModal()">Cancelar</button>
     <button class="btn-primary" id="btn-save-prestacao" onclick="savePrestacao()">Criar prestação</button>
+  </div>
+</div>
+
+<div class="modal" id="modal-add-investment">
+  <div class="modal-drag-bar"></div>
+  <div class="modal-header">
+    <h3 class="modal-title" id="inv-modal-title">📈 Novo Investimento</h3>
+    <button class="btn-modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="inv-id">
+    <div class="form-group">
+      <label class="form-label">Nome do investimento</label>
+      <input type="text" class="form-input" id="inv-name" placeholder="Ex: ETF S&P500, Ouro, BTC…">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Capital (€)</label>
+      <input type="number" class="form-input" id="inv-amount" placeholder="0,00" step="0.01" min="0" inputmode="decimal" style="font-size:22px;font-weight:600;text-align:center;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Data</label>
+      <input type="date" class="form-input" id="inv-date">
+    </div>
+    <div class="inv-expense-note" id="inv-expense-note">
+      💡 Será registado como gasto na categoria <strong>Investimentos</strong>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-outline" onclick="closeModal()">Cancelar</button>
+    <button class="btn-primary" id="btn-save-investment" onclick="saveInvestmentEntry()">Guardar</button>
   </div>
 </div>
 
