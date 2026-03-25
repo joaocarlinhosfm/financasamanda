@@ -355,7 +355,8 @@ html, body {
   position: fixed;
   /* Nav: bottom 16px + height 58px + gap 10px = 84px */
   bottom: calc(84px + env(safe-area-inset-bottom, 0px));
-  right: calc(max(20px, (100vw - 480px) / 2 + 18px));
+  /* Mesma margem direita da pill nav: 20px do bordo do ecrã (ou centrado quando max-width ativo) */
+  right: max(20px, calc((100vw - 400px) / 2 + 20px));
   display: flex;
   flex-direction: column;
   align-items: flex-end;
