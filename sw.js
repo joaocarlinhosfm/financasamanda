@@ -6,7 +6,7 @@
 // =====================================================
 
 // 🔑 Mudar este valor em cada deploy força atualização em todos os dispositivos
-const CACHE_NAME = 'financa-rosa-v5';
+const CACHE_NAME = 'financa-rosa-v6';
 
 // Assets locais — pré-carregados no install
 const STATIC_ASSETS = [
