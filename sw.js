@@ -5,7 +5,8 @@
 //              Network-first (Firebase / APIs)
 // =====================================================
 
-const CACHE_NAME = 'financa-rosa-v1';
+// 🔑 Mudar este valor em cada deploy força atualização em todos os dispositivos
+const CACHE_NAME = 'financa-rosa-v3';
 
 // Assets locais — pré-carregados no install
 const STATIC_ASSETS = [
@@ -43,7 +44,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(STATIC_ASSETS))
-      .then(() => self.skipWaiting())
+      .then(() => self.skipWaiting()) // toma controlo imediatamente
   );
 });
 
@@ -53,11 +54,19 @@ self.addEventListener('activate', event => {
     caches.keys()
       .then(keys => Promise.all(
         keys
-          .filter(k => k !== CACHE_NAME)
+          .filter(k => k !== CACHE_NAME) // apagar caches antigas
           .map(k => caches.delete(k))
       ))
-      .then(() => self.clients.claim())
+      .then(() => self.clients.claim()) // tomar controlo de todos os tabs abertos
   );
+});
+
+// ─── MENSAGENS DA APP → SW ─────────────────────────
+// Permite que a app peça ao SW para se atualizar imediatamente
+self.addEventListener('message', event => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // ─── FETCH ────────────────────────────────────────

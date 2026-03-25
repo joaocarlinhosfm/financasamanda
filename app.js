@@ -5,9 +5,60 @@
 // ─── SERVICE WORKER ───────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(r => console.log('[SW] Registado:', r.scope))
-      .catch(e => console.warn('[SW] Falhou:', e));
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      console.log('[SW] Registado:', reg.scope);
+
+      // ── Detetar SW novo a aguardar ──────────────────
+      const checkForWaiting = () => {
+        if (reg.waiting) { showUpdateBanner(reg.waiting); }
+      };
+
+      // Já há um SW em espera (ex: utilizador que não fechou o tab)
+      checkForWaiting();
+
+      // Novo SW instalado e à espera
+      reg.addEventListener('updatefound', () => {
+        const newSW = reg.installing;
+        newSW.addEventListener('statechange', () => {
+          if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateBanner(newSW);
+          }
+        });
+      });
+
+      // Verificar atualizações ao entrar na app
+      reg.update().catch(() => {});
+
+    }).catch(e => console.warn('[SW] Falhou:', e));
+
+    // Quando o SW toma controlo → recarregar para usar versão nova
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) { refreshing = true; window.location.reload(); }
+    });
+  });
+}
+
+function showUpdateBanner(swWaiting) {
+  // Não mostrar se já existe
+  if (document.getElementById('update-banner')) return;
+
+  const banner = document.createElement('div');
+  banner.id        = 'update-banner';
+  banner.className = 'update-banner';
+  banner.innerHTML = `
+    <span>🌸 Nova versão disponível!</span>
+    <button class="update-banner-btn" id="btn-update-now">Atualizar</button>
+  `;
+  document.body.appendChild(banner);
+
+  // Pequeno delay para a animação de entrada
+  requestAnimationFrame(() => banner.classList.add('visible'));
+
+  document.getElementById('btn-update-now').addEventListener('click', () => {
+    banner.classList.remove('visible');
+    // Dizer ao SW para tomar controlo imediatamente
+    swWaiting.postMessage({ type: 'SKIP_WAITING' });
   });
 }
 

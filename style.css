@@ -353,13 +353,15 @@ html, body {
 /* ─── SPEED DIAL ─────────────────────────────────── */
 .speed-dial {
   position: fixed;
-  bottom: calc(var(--nav-h) + 28px);
-  right: calc(max(0px, (100vw - 480px) / 2) + 18px);
+  /* Centro vertical da nav: bottom(16) + metade nav(29) - metade fab(27) = 18px */
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  /* Alinhar com a borda direita da pill nav (pill tem max-width 400px, margem 20px de cada lado) */
+  right: calc(max(20px, (100vw - 400px) / 2 + 12px));
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 10px;
-  z-index: 20;
+  z-index: 40;
 }
 .speed-dial-options {
   display: flex;
@@ -415,18 +417,19 @@ html, body {
 .bottom-nav {
   /* Pill flutuante — posição fixa sobre o conteúdo */
   position: fixed;
-  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px)); /* +2px */
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 40px);
   max-width: 400px;
   height: 58px;
 
-  background: var(--color-primary);
+  /* Paleta: fundo rosa claro, letras rosa escuro — igual ao badge negativo */
+  background: var(--rose-100);
   border-radius: 30px;
   box-shadow:
-    0 8px 32px rgba(224, 96, 138, 0.32),
-    0 2px 8px  rgba(224, 96, 138, 0.20);
+    0 8px 32px rgba(224, 96, 138, 0.18),
+    0 2px 8px  rgba(224, 96, 138, 0.12);
 
   display: flex;
   align-items: center;
@@ -455,7 +458,8 @@ html, body {
   background: none;
   border: none;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.55);
+  /* inativo: rosa médio legível */
+  color: var(--color-text-hint);
   transition: color 0.18s, transform 0.18s;
   border-radius: 30px;
   -webkit-tap-highlight-color: transparent;
@@ -463,18 +467,20 @@ html, body {
 }
 
 .nav-item.active {
-  color: var(--white);
+  /* ativo: rosa escuro — mesmo tom do texto do badge negativo */
+  color: var(--color-primary);
 }
 
-/* Bolinha de destaque no item ativo */
+/* Indicador ativo */
 .nav-item.active::before {
   content: '';
   position: absolute;
   top: 0; left: 50%;
   transform: translateX(-50%);
   width: 20px; height: 3px;
-  background: rgba(255,255,255,0.7);
+  background: var(--color-primary);
   border-radius: 0 0 3px 3px;
+  opacity: 0.5;
 }
 
 .nav-icon {
@@ -1498,3 +1504,46 @@ select.form-input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http
   padding: 10px 14px;
   line-height: 1.5;
 }
+
+
+/* ─── BANNER DE ATUALIZAÇÃO ─────────────────────────── */
+.update-banner {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-80px);
+  width: calc(100% - 32px);
+  max-width: 440px;
+  background: var(--rose-800);
+  color: white;
+  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 200;
+  box-shadow: 0 6px 24px rgba(122, 37, 80, 0.3);
+  font-size: 14px;
+  font-weight: 500;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.update-banner.visible {
+  transform: translateX(-50%) translateY(0);
+}
+.update-banner-btn {
+  background: white;
+  color: var(--rose-800);
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 7px 16px;
+  font-family: var(--font-main);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+.update-banner-btn:active { opacity: 0.8; }
