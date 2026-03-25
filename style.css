@@ -73,6 +73,13 @@ html, body {
   overflow: hidden;
 }
 
+/* A nav pill é fixed — o app-main ocupa toda a altura disponível */
+#app .app-main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 /* ─── LOADING OVERLAY ───────────────────────────────── */
 .loading-overlay {
   position: fixed; inset: 0;
@@ -227,7 +234,7 @@ html, body {
 .screen {
   display: none;
   padding: 16px;
-  padding-bottom: calc(var(--nav-h) + 72px);
+  padding-bottom: calc(var(--nav-h) + 88px);
   animation: screenIn 0.2s ease;
 }
 .screen.active { display: block; }
@@ -346,7 +353,7 @@ html, body {
 /* ─── SPEED DIAL ─────────────────────────────────── */
 .speed-dial {
   position: fixed;
-  bottom: calc(var(--nav-h) + 14px);
+  bottom: calc(var(--nav-h) + 28px);
   right: calc(max(0px, (100vw - 480px) / 2) + 18px);
   display: flex;
   flex-direction: column;
@@ -404,45 +411,84 @@ html, body {
 .speed-dial.open .fab { transform: rotate(45deg); }
 
 /* ─── BOTTOM NAV ────────────────────────────────────── */
+/* ─── FLOATING PILL NAV ─────────────────────────────── */
 .bottom-nav {
-  height: var(--nav-h);
-  background: var(--white);
-  border-top: 1px solid var(--color-border);
+  /* Pill flutuante — posição fixa sobre o conteúdo */
+  position: fixed;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 40px);
+  max-width: 400px;
+  height: 58px;
+
+  background: var(--rose-800);
+  border-radius: 30px;
+  box-shadow:
+    0 8px 32px rgba(122, 37, 80, 0.28),
+    0 2px 8px  rgba(122, 37, 80, 0.18);
+
   display: flex;
-  align-items: stretch;
-  flex-shrink: 0;
-  z-index: 10;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  align-items: center;
+  z-index: 30;
+
+  /* Animação hide/show */
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+              opacity   0.35s ease;
 }
+
+/* Estado escondido (scroll down) */
+.bottom-nav.nav-hidden {
+  transform: translateX(-50%) translateY(calc(100% + 24px));
+  opacity: 0;
+  pointer-events: none;
+}
+
 .nav-item {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 6px 0;
-  background: none; border: none;
+  gap: 3px;
+  padding: 8px 0;
+  background: none;
+  border: none;
   cursor: pointer;
-  color: var(--color-text-hint);
-  transition: color 0.18s;
-  border-radius: 0;
+  color: rgba(255, 255, 255, 0.45);
+  transition: color 0.18s, transform 0.18s;
+  border-radius: 30px;
   -webkit-tap-highlight-color: transparent;
   position: relative;
 }
-.nav-item.active { color: var(--color-primary); }
+
+.nav-item.active {
+  color: var(--white);
+}
+
+/* Bolinha de destaque no item ativo */
 .nav-item.active::before {
   content: '';
   position: absolute;
   top: 0; left: 50%;
   transform: translateX(-50%);
-  width: 28px; height: 2.5px;
-  background: var(--color-primary);
+  width: 20px; height: 3px;
+  background: rgba(255,255,255,0.7);
   border-radius: 0 0 3px 3px;
 }
-.nav-icon { width: 22px; height: 22px; flex-shrink: 0; transition: transform 0.18s; }
-.nav-item.active .nav-icon { transform: scale(1.08); }
-.nav-label { font-size: 10px; font-weight: 500; letter-spacing: 0.01em; }
+
+.nav-icon {
+  width: 21px; height: 21px;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.nav-item.active .nav-icon { transform: scale(1.12); }
+.nav-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 
 /* ─── INNER SCREEN HEADER ───────────────────────────── */
 .screen-header-inner {
@@ -714,7 +760,7 @@ select.form-input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http
 /* ─── TOAST ──────────────────────────────────────────── */
 .toast {
   position: fixed;
-  bottom: calc(var(--nav-h) + 78px);
+  bottom: calc(var(--nav-h) + 92px);
   left: 50%; transform: translateX(-50%) translateY(10px);
   background: var(--rose-800);
   color: white;

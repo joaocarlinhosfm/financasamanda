@@ -185,11 +185,42 @@ function showToast(msg) {
 function setupNavigation() {
   document.querySelectorAll('.nav-item').forEach(btn =>
     btn.addEventListener('click', () => navigateTo(btn.dataset.screen)));
+
+  // ── Pill nav: esconder ao scroll down, mostrar ao scroll up ──
+  const nav     = document.querySelector('.bottom-nav');
+  const main    = document.querySelector('.app-main');
+  let lastY     = 0;
+  let ticking   = false;
+
+  main.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const currentY = main.scrollTop;
+      const delta    = currentY - lastY;
+
+      // Esconder se scrollou para baixo mais de 10px e já passou dos 80px
+      if (delta > 10 && currentY > 80) {
+        nav.classList.add('nav-hidden');
+        // Fechar speed-dial também
+        document.getElementById('speed-dial')?.classList.remove('open');
+      }
+      // Mostrar se scrollou para cima mais de 5px, ou chegou ao topo
+      else if (delta < -5 || currentY < 60) {
+        nav.classList.remove('nav-hidden');
+      }
+
+      lastY    = currentY;
+      ticking  = false;
+    });
+  }, { passive: true });
 }
 
 function navigateTo(name) {
   document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.screen === name));
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === `screen-${name}`));
+  // Mostrar a pill nav sempre que se navega
+  document.querySelector('.bottom-nav')?.classList.remove('nav-hidden');
   // Header de mês só em Início e Gastos
   const showMonthHeader = ['home','gastos'].includes(name);
   document.getElementById('app-header').style.display = showMonthHeader ? 'flex' : 'none';
