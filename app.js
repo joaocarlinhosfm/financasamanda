@@ -2,6 +2,15 @@
 //  FINANÇA ROSA — Lógica Principal
 // =====================================================
 
+// ─── SERVICE WORKER ───────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(r => console.log('[SW] Registado:', r.scope))
+      .catch(e => console.warn('[SW] Falhou:', e));
+  });
+}
+
 const MONTH_NAMES = [
   'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
   'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'
@@ -907,19 +916,23 @@ async function loadAnnual() {
       DB.getAllPrestacoes(APP.uid),
     ]);
 
+    // Agregar gastos por categoria para todo o ano
+    const allYearExpenses = [];
     const data = Array.from({length:12},(_,i)=>i+1).map(m => {
       const activePrest = filterActivePrestacoes(allPrest, m, APP.annualYear);
-      const income  = allTx.filter(t=>t.month===m&&t.type==='income').reduce((s,t)=>s+(t.amount||0),0);
-      const expense = [
+      const monthExp = [
         ...allTx.filter(t=>t.month===m&&t.type!=='income'),
         ...allFx.filter(t=>t.month===m),
         ...activePrest
-      ].reduce((s,t)=>s+(t.amount||0),0);
+      ];
+      allYearExpenses.push(...monthExp);
+      const income  = allTx.filter(t=>t.month===m&&t.type==='income').reduce((s,t)=>s+(t.amount||0),0);
+      const expense = monthExp.reduce((s,t)=>s+(t.amount||0),0);
       return { month:m, income, expense, balance:income-expense };
     });
 
     renderAnnualChart(data);
-    renderAnnualSummary(data);
+    renderAnnualSummary(data, allYearExpenses);
   } catch(e) { console.error('[loadAnnual]', e); }
 }
 
@@ -952,10 +965,31 @@ function renderAnnualChart(data) {
   });
 }
 
-function renderAnnualSummary(data) {
+function renderAnnualSummary(data, allYearExpenses = []) {
   const totalIncome  = data.reduce((s,d)=>s+d.income,0);
   const totalExpense = data.reduce((s,d)=>s+d.expense,0);
   const totalBalance = totalIncome - totalExpense;
+
+  // ── Agregação por categoria ──
+  const byCategory = {};
+  allYearExpenses.forEach(e => {
+    const c = e.category || 'Outro';
+    byCategory[c] = (byCategory[c] || 0) + (e.amount || 0);
+  });
+  const sortedCats = Object.entries(byCategory).sort((a,b) => b[1] - a[1]);
+
+  const catHTML = sortedCats.length
+    ? sortedCats.map(([cat, val]) => {
+        const pct = totalExpense > 0 ? (val / totalExpense * 100) : 0;
+        return `<div class="cat-row">
+          <span class="cat-icon">${CATEGORY_ICONS[cat]||'📌'}</span>
+          <span class="cat-name">${cat}</span>
+          <div class="cat-track"><div class="cat-fill" style="width:${pct.toFixed(1)}%"></div></div>
+          <span class="cat-value">${fmt(val)}</span>
+        </div>`;
+      }).join('')
+    : '<p class="empty-state" style="padding:8px 0;">Sem gastos registados.</p>';
+
   document.getElementById('annual-summary').innerHTML = `
     <div class="section-card" style="margin-top:12px;">
       <h3 class="section-title">Totais ${APP.annualYear}</h3>
@@ -967,7 +1001,12 @@ function renderAnnualSummary(data) {
           <div class="saldo-badge ${totalBalance>=0?'positive':'negative'}">${totalBalance>=0?'✓ Positivo':'↓ Negativo'}</div>
         </div>
       </div>
-    </div>`;
+    </div>
+    ${sortedCats.length ? `
+    <div class="section-card" style="margin-top:12px;">
+      <h3 class="section-title">Gastos por categoria · ${APP.annualYear}</h3>
+      ${catHTML}
+    </div>` : ''}`;
 }
 
 
