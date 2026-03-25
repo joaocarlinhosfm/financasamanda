@@ -1554,3 +1554,72 @@ select.form-input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http
   min-height: 18px;
   color: var(--color-text-muted);
 }
+
+
+/* ─── CATEGORIAS — PAINEL COLAPSÁVEL ─────────────── */
+.cat-panel-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+}
+.cat-panel-count {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--rose-100);
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+.cat-panel-chevron {
+  margin-left: auto;
+  font-size: 20px;
+  color: var(--color-text-hint);
+  transition: transform 0.22s ease;
+  line-height: 1;
+}
+.cat-panel-toggle[aria-expanded="true"] .cat-panel-chevron {
+  transform: rotate(90deg);
+}
+.cat-panel {
+  margin-top: 14px;
+}
+.cat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--rose-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 5px 10px 5px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+.cat-chip-remove {
+  background: none;
+  border: none;
+  color: var(--color-text-hint);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0 0 2px;
+  display: flex;
+  align-items: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s;
+}
+.cat-chip-remove:active { color: var(--color-primary); }

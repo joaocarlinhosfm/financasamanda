@@ -1464,13 +1464,25 @@ async function saveSettings() {
 
 function renderCategoriesList() {
   const container = document.getElementById('categories-list');
-  const cats = APP.settings.categories||DEFAULT_CATEGORIES;
+  const countEl   = document.getElementById('cat-panel-count');
+  const cats = APP.settings.categories || DEFAULT_CATEGORIES;
+
+  if (countEl) countEl.textContent = `${cats.length}`;
+
   container.innerHTML = cats.length
-    ? cats.map((c,i)=>`<div class="cat-config-item">
-        <span class="cat-config-name">${CATEGORY_ICONS[c]||'📌'} ${c}</span>
-        <button class="cat-config-remove" onclick="removeCategory(${i})">✕</button>
-      </div>`).join('')
-    : '<p class="empty-state" style="padding:12px 0;">Sem categorias.</p>';
+    ? cats.map((c, i) => `
+        <span class="cat-chip">
+          ${c}
+          <button class="cat-chip-remove" onclick="removeCategory(${i})" title="Remover">✕</button>
+        </span>`).join('')
+    : '<p class="empty-state" style="padding:8px 0;">Sem categorias.</p>';
+}
+
+function toggleCatPanel(btn) {
+  const panel   = document.getElementById('cat-panel');
+  const isOpen  = btn.getAttribute('aria-expanded') === 'true';
+  btn.setAttribute('aria-expanded', !isOpen);
+  panel.style.display = isOpen ? 'none' : 'block';
 }
 
 async function removeCategory(index) {

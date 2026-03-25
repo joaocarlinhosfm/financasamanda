@@ -185,9 +185,15 @@
         <p class="import-status" id="import-status"></p>
       </div>
       <div class="section-card">
-        <h3 class="section-title">Categorias</h3>
-        <div id="categories-list"></div>
-        <button class="btn-outline full-width" style="margin-top:10px;" onclick="openAddCategory()">+ Nova categoria</button>
+        <button class="cat-panel-toggle" onclick="toggleCatPanel(this)" aria-expanded="false">
+          <span class="section-title" style="margin-bottom:0;">Categorias</span>
+          <span class="cat-panel-count" id="cat-panel-count"></span>
+          <span class="cat-panel-chevron">›</span>
+        </button>
+        <div class="cat-panel" id="cat-panel" style="display:none;">
+          <div class="cat-chips" id="categories-list"></div>
+          <button class="btn-outline full-width" style="margin-top:12px;" onclick="openAddCategory()">+ Nova categoria</button>
+        </div>
       </div>
       <div class="section-card danger-card">
         <h3 class="section-title">Exportar dados</h3>
