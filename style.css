@@ -353,10 +353,9 @@ html, body {
 /* ─── SPEED DIAL ─────────────────────────────────── */
 .speed-dial {
   position: fixed;
-  /* Centro vertical da nav: bottom(16) + metade nav(29) - metade fab(27) = 18px */
-  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-  /* Alinhar com a borda direita da pill nav (pill tem max-width 400px, margem 20px de cada lado) */
-  right: calc(max(20px, (100vw - 400px) / 2 + 12px));
+  /* Nav: bottom 16px + height 58px + gap 10px = 84px */
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  right: calc(max(20px, (100vw - 480px) / 2 + 18px));
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -1547,3 +1546,10 @@ select.form-input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http
   transition: opacity 0.15s;
 }
 .update-banner-btn:active { opacity: 0.8; }
+
+.update-check-status {
+  font-size: 12px;
+  margin-top: 8px;
+  min-height: 18px;
+  color: var(--color-text-muted);
+}

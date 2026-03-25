@@ -147,7 +147,7 @@
 
     <div class="screen" id="screen-metas">
       <div class="screen-header-inner">
-        <h2 class="screen-title-inner">Metas & Poupanças</h2>
+        <h2 class="screen-title-inner">Metas & Investimentos</h2>
       </div>
       <div class="section-card">
         <h3 class="section-title">Investimentos</h3>
@@ -193,6 +193,12 @@
         <h3 class="section-title">Exportar dados</h3>
         <p class="helper-text" style="margin-bottom:10px;">Faz download de todos os teus dados em formato JSON.</p>
         <button class="btn-outline full-width" onclick="exportData()">📤 Exportar JSON</button>
+      </div>
+      <div class="section-card">
+        <h3 class="section-title">Atualização da app</h3>
+        <p class="helper-text" style="margin-bottom:10px;">Verifica se existe uma versão mais recente da Finança Rosa.</p>
+        <button class="btn-outline full-width" onclick="checkForAppUpdate()">🔄 Verificar atualização</button>
+        <p class="update-check-status" id="update-check-status"></p>
       </div>
       <div class="firebase-info-card">
         <span class="firebase-dot"></span>
@@ -472,6 +478,10 @@
     <div class="inv-expense-note" id="inv-expense-note">
       💡 Será registado como gasto na categoria <strong>Investimentos</strong>
     </div>
+    <label class="checkbox-row" id="inv-expense-toggle">
+      <input type="checkbox" id="inv-as-expense" checked>
+      <span>Registar como gasto do mês</span>
+    </label>
   </div>
   <div class="modal-footer">
     <button class="btn-outline" onclick="closeModal()">Cancelar</button>

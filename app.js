@@ -1239,20 +1239,25 @@ async function saveInvestmentEntry() {
       });
     }
 
-    // Registar sempre como gasto na categoria Investimentos
-    await DB.add(APP.uid, 'transactions', {
-      name: `Investimento: ${isNew ? name : document.getElementById('inv-name').value}`,
-      amount,
-      category: 'Investimentos',
-      date,
-      month: APP.currentMonth,
-      year:  APP.currentYear,
-      type:  'variable'
-    });
+    // Registar como gasto apenas se o checkbox estiver ativo
+    const asExpense = document.getElementById('inv-as-expense')?.checked !== false;
+    if (asExpense) {
+      await DB.add(APP.uid, 'transactions', {
+        name: `Investimento: ${isNew ? name : document.getElementById('inv-name').value}`,
+        amount,
+        category: 'Investimentos',
+        date,
+        month: APP.currentMonth,
+        year:  APP.currentYear,
+        type:  'variable'
+      });
+    }
 
     closeModal();
     await Promise.all([loadGoals(), loadDashboard()]);
-    showToast(navigator.onLine ? `📈 ${fmt(amount)} investido ✓` : '📶 Guardado offline · será sincronizado');
+    showToast(navigator.onLine
+      ? `📈 ${fmt(amount)} investido${asExpense ? ' · registado como gasto' : ''} ✓`
+      : '📶 Guardado offline · será sincronizado');
   } catch (e) {
     console.error('[saveInvestmentEntry]', e);
     showToast('Erro ao guardar.');
@@ -1392,6 +1397,52 @@ async function upgradeToGoogle() {
     APP.uid = user.uid; APP.user = user;
     renderAccountCard(); showToast('Conta Google ligada ✓ Dados preservados!');
   } catch(e) { console.error('[upgradeToGoogle]', e); showToast('Erro ao ligar conta Google.'); }
+}
+
+async function checkForAppUpdate() {
+  const statusEl = document.getElementById('update-check-status');
+  const btn = document.querySelector('[onclick="checkForAppUpdate()"]');
+  if (!('serviceWorker' in navigator)) {
+    statusEl.textContent = '⚠️ Service Worker não disponível neste browser.';
+    return;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ A verificar…'; }
+  statusEl.textContent = '';
+  try {
+    const reg = await navigator.serviceWorker.getRegistration('./sw.js');
+    if (!reg) {
+      statusEl.style.color = 'var(--color-text-muted)';
+      statusEl.textContent = 'App não instalada como PWA.';
+      return;
+    }
+    await reg.update();
+    // Dar 1s para o SW processar
+    await new Promise(r => setTimeout(r, 1000));
+    if (reg.waiting) {
+      // Há versão nova — mostrar banner de confirmação
+      statusEl.style.color = 'var(--color-positive)';
+      statusEl.textContent = '✓ Nova versão encontrada!';
+      const ok = await showConfirm({
+        icon: '🌸',
+        title: 'Nova versão disponível',
+        message: 'Existe uma atualização da Finança Rosa. Queres instalar agora?',
+        confirmText: 'Atualizar agora',
+        cancelText: 'Mais tarde',
+        danger: false
+      });
+      if (ok) {
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+    } else {
+      statusEl.style.color = 'var(--color-text-muted)';
+      statusEl.textContent = '✓ Já tens a versão mais recente.';
+    }
+  } catch (e) {
+    statusEl.style.color = 'var(--color-primary)';
+    statusEl.textContent = '⚠️ Erro ao verificar. Confirma a ligação.';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Verificar atualização'; }
+  }
 }
 
 async function handleSignOut() {
