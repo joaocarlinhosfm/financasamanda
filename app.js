@@ -79,6 +79,16 @@ const CATEGORY_ICONS = {
   'Salário':'💰','Outro':'📌',
 };
 
+// Retorna o emoji da categoria — ou string vazia para categorias personalizadas sem emoji
+function catIcon(name) {
+  return CATEGORY_ICONS[name] || '';
+}
+// Com espaço separador só quando há emoji
+function catLabel(name) {
+  const icon = catIcon(name);
+  return icon ? `${icon} ${name}` : name;
+}
+
 const APP = {
   uid: null, user: null,
   currentMonth: new Date().getMonth() + 1,
@@ -405,7 +415,7 @@ function renderCategoryBars(expenses, total) {
     .map(([cat, val]) => {
       const pct = total > 0 ? (val/total*100) : 0;
       return `<div class="cat-row">
-        <span class="cat-icon">${CATEGORY_ICONS[cat]||'📌'}</span>
+        <span class="cat-icon">${catIcon(cat)||'🏷️'}</span>
         <span class="cat-name">${cat}</span>
         <div class="cat-track"><div class="cat-fill" style="width:${pct.toFixed(1)}%"></div></div>
         <span class="cat-value">${fmt(val)}</span>
@@ -520,7 +530,7 @@ async function loadTransactions(filter = 'all') {
 }
 
 function renderTxItem(t) {
-  const icon = CATEGORY_ICONS[t.category]||'📌';
+  const icon = catIcon(t.category)||'🏷️';
   const isIncome = t.type==='income';
   const badges = {
     fixed:     '<span class="tx-type-badge tx-type-fixed">Fixo</span>',
@@ -572,7 +582,7 @@ function editCurrentTx() {
   if (t.type==='income') {
     catSel.innerHTML = `<option value="Salário">💰 Salário</option><option value="Outro">📌 Outro</option>`;
   } else {
-    catSel.innerHTML = cats.map(c=>`<option value="${c}">${CATEGORY_ICONS[c]||'📌'} ${c}</option>`).join('');
+    catSel.innerHTML = cats.map(c=>`<option value="${c}">${catLabel(c)}</option>`).join('');
   }
   catSel.value = t.category||'';
   // Tipo de pagamento (fixos)
@@ -766,7 +776,7 @@ async function loadWeather() {
 function openAddFixed() {
   const cats = APP.settings.categories || DEFAULT_CATEGORIES;
   document.getElementById('fixed-category').innerHTML =
-    cats.map(c => `<option value="${c}">${CATEGORY_ICONS[c]||'📌'} ${c}</option>`).join('');
+    cats.map(c => `<option value="${c}">${catLabel(c)}</option>`).join('');
   document.getElementById('fixed-name').value   = '';
   document.getElementById('fixed-amount').value = '';
   openModal('modal-add-fixed');
@@ -775,7 +785,7 @@ function openAddFixed() {
 function openAddVariable() {
   const cats = APP.settings.categories || DEFAULT_CATEGORIES;
   document.getElementById('var-category').innerHTML =
-    cats.map(c => `<option value="${c}">${CATEGORY_ICONS[c]||'📌'} ${c}</option>`).join('');
+    cats.map(c => `<option value="${c}">${catLabel(c)}</option>`).join('');
   document.getElementById('var-name').value   = '';
   document.getElementById('var-amount').value = '';
   document.getElementById('var-date').value   = todayISO();
@@ -934,7 +944,7 @@ function populateCategorySelect(type) {
   const cats = APP.settings.categories||DEFAULT_CATEGORIES;
   sel.innerHTML = type==='income'
     ? `<option value="Salário">💰 Salário</option><option value="Outro">📌 Outro</option>`
-    : cats.map(c=>`<option value="${c}">${CATEGORY_ICONS[c]||'📌'} ${c}</option>`).join('');
+    : cats.map(c=>`<option value="${c}">${catLabel(c)}</option>`).join('');
 }
 
 function setupTypeSelector() {
@@ -1092,7 +1102,7 @@ function renderAnnualSummary(data, allYearExpenses = []) {
     ? sortedCats.map(([cat, val]) => {
         const pct = totalExpense > 0 ? (val / totalExpense * 100) : 0;
         return `<div class="cat-row">
-          <span class="cat-icon">${CATEGORY_ICONS[cat]||'📌'}</span>
+          <span class="cat-icon">${catIcon(cat)||'🏷️'}</span>
           <span class="cat-name">${cat}</span>
           <div class="cat-track"><div class="cat-fill" style="width:${pct.toFixed(1)}%"></div></div>
           <span class="cat-value">${fmt(val)}</span>

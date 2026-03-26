@@ -6,7 +6,7 @@
 // =====================================================
 
 // 🔑 Mudar este valor em cada deploy força atualização em todos os dispositivos
-const CACHE_NAME = 'financa-rosa-v6';
+const CACHE_NAME = 'financa-rosa-v5';
 
 // Assets locais — pré-carregados no install
 const STATIC_ASSETS = [
@@ -84,13 +84,20 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 2) Cache-first: assets locais (mesmo origin)
+  // 2) Network-first para JS e CSS do próprio site — garante que updates chegam sempre
+  if (url.origin === self.location.origin &&
+      (url.pathname.endsWith('.js') || url.pathname.endsWith('.css'))) {
+    event.respondWith(networkWithCacheFallback(request));
+    return;
+  }
+
+  // 3) Cache-first: restantes assets locais (HTML, imagens, manifesto)
   if (url.origin === self.location.origin) {
     event.respondWith(cacheFirst(request));
     return;
   }
 
-  // 3) Stale-while-revalidate: CDN externos (Firebase SDK, Chart.js, etc.)
+  // 4) Stale-while-revalidate: CDN externos (Firebase SDK, Chart.js, etc.)
   const isCDN = CDN_ORIGINS.some(o => url.origin === o || request.url.startsWith(o));
   if (isCDN) {
     event.respondWith(staleWhileRevalidate(request));
